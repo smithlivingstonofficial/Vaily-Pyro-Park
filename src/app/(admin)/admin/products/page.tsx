@@ -5,11 +5,21 @@ import { Plus, Upload, Edit, Trash2, Search, Sparkles, Volume2, Package, Tag, Ch
 import { Product } from '@/types';
 import { ProductService } from '@/lib/services/product.service';
 import { BulkCSVImportModal } from '@/components/admin/BulkCSVImportModal';
+import { ProductFormModal } from '@/components/admin/ProductFormModal';
+import { DeleteProductModal } from '@/components/admin/DeleteProductModal';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+
+  // Add / Edit Modal State
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<Partial<Product> | null>(null);
+
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -25,10 +35,40 @@ export default function AdminProductsPage() {
       p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleToggleActive = (productId: string) => {
+  const handleToggleActive = async (productId: string, currentStatus: boolean) => {
+    const newStatus = await ProductService.toggleProductActive(productId, currentStatus);
     setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, is_active: !p.is_active } : p))
+      prev.map((p) => (p.id === productId ? { ...p, is_active: newStatus } : p))
     );
+  };
+
+  const handleOpenAddModal = () => {
+    setProductToEdit(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenEditModal = (product: Product) => {
+    setProductToEdit(product);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (product: Product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleFormSuccess = (savedProduct: Product) => {
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === savedProduct.id);
+      if (exists) {
+        return prev.map((p) => (p.id === savedProduct.id ? savedProduct : p));
+      }
+      return [savedProduct, ...prev];
+    });
+  };
+
+  const handleDeleteSuccess = (deletedId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== deletedId));
   };
 
   const handleBulkImportSuccess = (importedList: Partial<Product>[]) => {
@@ -51,7 +91,7 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs">
         <div>
@@ -65,10 +105,16 @@ export default function AdminProductsPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsCsvModalOpen(true)}
+            onClick={handleOpenAddModal}
             className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-98 cursor-pointer"
           >
-            <Upload className="w-4 h-4" /> Bulk CSV Import
+            <Plus className="w-4 h-4" /> Add New Product
+          </button>
+          <button
+            onClick={() => setIsCsvModalOpen(true)}
+            className="w-full sm:w-auto px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-98 cursor-pointer"
+          >
+            <Upload className="w-4 h-4 text-amber-400" /> Bulk CSV
           </button>
         </div>
       </div>
@@ -158,7 +204,7 @@ export default function AdminProductsPage() {
                     <td className="p-4 font-black text-slate-900">{product.stock || 0}</td>
                     <td className="p-4">
                       <button
-                        onClick={() => handleToggleActive(product.id)}
+                        onClick={() => handleToggleActive(product.id, product.is_active)}
                         className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-colors cursor-pointer border ${
                           product.is_active
                             ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
@@ -169,13 +215,22 @@ export default function AdminProductsPage() {
                       </button>
                     </td>
                     <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleToggleActive(product.id)}
-                        className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg cursor-pointer"
-                        title="Toggle Active Status"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleOpenEditModal(product)}
+                          className="p-1.5 text-slate-600 hover:text-slate-950 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                          title="Edit Product Details"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteModal(product)}
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+                          title="Delete Product SKU"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -214,7 +269,7 @@ export default function AdminProductsPage() {
                       {product.name}
                     </span>
                     <button
-                      onClick={() => handleToggleActive(product.id)}
+                      onClick={() => handleToggleActive(product.id, product.is_active)}
                       className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 cursor-pointer ${
                         product.is_active
                           ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
@@ -247,16 +302,20 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-xl">
-                    Stock: {product.stock || 0}
-                  </span>
+                <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => handleToggleActive(product.id)}
+                    onClick={() => handleOpenEditModal(product)}
                     className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                    title="Toggle Active Status"
+                    title="Edit Product"
                   >
                     <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenDeleteModal(product)}
+                    className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl cursor-pointer"
+                    title="Delete Product"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -264,6 +323,22 @@ export default function AdminProductsPage() {
           );
         })}
       </div>
+
+      {/* Add / Edit Product Modal */}
+      <ProductFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        productToEdit={productToEdit}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Delete Product Confirmation Modal */}
+      <DeleteProductModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        product={productToDelete}
+        onSuccess={handleDeleteSuccess}
+      />
 
       {/* CSV Importer Modal */}
       <BulkCSVImportModal

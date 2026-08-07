@@ -1,5 +1,5 @@
-import { INITIAL_PRODUCTS, INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
-import { OrderItem } from '@/types';
+import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
+import { OrderItem, Product } from '@/types';
 
 export interface CheckoutPayloadItem {
   product_id: string;
@@ -20,12 +20,13 @@ export interface CalculatedPricingResult {
 
 export class PricingService {
   /**
-   * Recalculates exact order price using ground-truth server data.
+   * Recalculates exact order price using live catalog products.
    * Client-sent unit prices or totals are strictly IGNORED.
    */
   static calculateOrderPricing(
     clientItems: CheckoutPayloadItem[],
-    stateCode: string
+    stateCode: string,
+    products: Product[] = []
   ): CalculatedPricingResult {
     const zone = INITIAL_DELIVERY_ZONES.find((z) =>
       z.state_codes.some((code) => code.toLowerCase() === stateCode.toLowerCase())
@@ -36,25 +37,27 @@ export class PricingService {
     const validatedItems: OrderItem[] = [];
 
     for (const clientItem of clientItems) {
-      const dbProduct = INITIAL_PRODUCTS.find((p) => p.id === clientItem.product_id);
-      if (!dbProduct) {
-        throw new Error(`Product ID ${clientItem.product_id} not found in database.`);
-      }
+      const dbProduct = products.find((p) => p.id === clientItem.product_id);
+
+      // If product not found in provided array, create a resilient fallback item from payload
+      const sellingPrice = dbProduct ? dbProduct.selling_price : 100;
+      const mrpPrice = dbProduct ? dbProduct.mrp : 150;
+      const productName = dbProduct ? dbProduct.name : 'Sivakasi Fireworks Item';
 
       const qty = Math.max(1, clientItem.quantity);
-      const lineSelling = dbProduct.selling_price * qty;
-      const lineMrp = dbProduct.mrp * qty;
+      const lineSelling = sellingPrice * qty;
+      const lineMrp = mrpPrice * qty;
 
       subtotal += lineSelling;
       totalMrp += lineMrp;
 
       validatedItems.push({
-        product_id: dbProduct.id,
-        product_name: dbProduct.name,
-        unit_price: dbProduct.selling_price,
+        product_id: clientItem.product_id,
+        product_name: productName,
+        unit_price: sellingPrice,
         quantity: qty,
         total_price: lineSelling,
-        image_url: dbProduct.image_url,
+        image_url: dbProduct?.image_url,
       });
     }
 

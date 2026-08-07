@@ -10,6 +10,8 @@ export interface Category {
   is_active: boolean;
 }
 
+export type SoundLevel = 'Low' | 'Medium' | 'High' | 'Silent';
+
 export interface Product {
   id: string;
   category_id?: string;
@@ -24,7 +26,7 @@ export interface Product {
   is_active: boolean;
   is_featured: boolean;
   is_best_seller: boolean;
-  sound_level?: 'Low' | 'Medium' | 'High' | 'Silent';
+  sound_level?: SoundLevel;
   category?: Category;
   stock?: number;
 }
