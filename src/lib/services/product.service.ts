@@ -203,6 +203,57 @@ export class ProductService {
   }
 
   /**
+   * Bulk insert/upsert products from CSV import into Supabase DB.
+   */
+  static async bulkCreateProducts(productsList: Partial<Product>[]): Promise<boolean> {
+    const supabase = this.getSupabase();
+
+    const payloads = productsList.map((p, idx) => ({
+      name: p.name,
+      slug: (p.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-') + `-${Date.now()}-${idx}`,
+      sku: p.sku || `SKU-${Date.now()}-${idx}`,
+      description: p.description || '',
+      pack_size: p.pack_size || '1 Box',
+      mrp: p.mrp || 0,
+      selling_price: p.selling_price || 0,
+      image_url: p.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+      is_active: p.is_active !== undefined ? p.is_active : true,
+      is_featured: p.is_featured || false,
+      is_best_seller: p.is_best_seller || false,
+      sound_level: p.sound_level || 'Medium',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data: inserted, error } = await supabase
+      .from('products')
+      .upsert(payloads, { onConflict: 'sku' })
+      .select();
+
+    if (error) {
+      console.error('Supabase bulkCreateProducts error:', error);
+      throw error;
+    }
+
+    if (inserted && inserted.length > 0) {
+      const invPayloads = inserted.map((p, idx) => ({
+        product_id: p.id,
+        available_stock: productsList[idx]?.stock || 100,
+        reserved_stock: 0,
+        safety_threshold: 20,
+      }));
+
+      try {
+        await supabase.from('inventory').upsert(invPayloads, { onConflict: 'product_id' });
+      } catch (invErr) {
+        console.warn('Inventory bulk stock insert warning:', invErr);
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Fetch active combos/assortment boxes from Supabase DB.
    */
   static async getCombos(): Promise<Combo[]> {

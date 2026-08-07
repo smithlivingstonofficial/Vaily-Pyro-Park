@@ -71,23 +71,9 @@ export default function AdminProductsPage() {
     setProducts((prev) => prev.filter((p) => p.id !== deletedId));
   };
 
-  const handleBulkImportSuccess = (importedList: Partial<Product>[]) => {
-    const newProducts: Product[] = importedList.map((item, idx) => ({
-      id: `imported-${Date.now()}-${idx}`,
-      name: item.name || 'Unnamed Cracker',
-      slug: (item.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      sku: item.sku || `SKU-${idx}`,
-      pack_size: item.pack_size || '1 Box',
-      mrp: item.mrp || 0,
-      selling_price: item.selling_price || 0,
-      sound_level: (item.sound_level as any) || 'Medium',
-      is_active: true,
-      is_featured: false,
-      is_best_seller: false,
-      stock: item.stock || 100,
-    }));
-
-    setProducts((prev) => [...newProducts, ...prev]);
+  const handleBulkImportSuccess = async () => {
+    const freshData = await ProductService.getAllProducts();
+    setProducts(freshData);
   };
 
   return (
