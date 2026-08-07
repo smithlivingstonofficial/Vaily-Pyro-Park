@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, RefreshCw, ShoppingBag, CheckCircle, Search, AlertCircle } from 'lucide-react';
 import { OrderService } from '@/lib/services/order.service';
-import { INITIAL_PRODUCTS } from '@/lib/mockData';
+import { ProductService } from '@/lib/services/product.service';
 import { Order } from '@/types';
 import { useCart } from '@/context/CartContext';
 
@@ -39,12 +39,14 @@ export default function BuyAgainPage() {
     }
   };
 
-  const handleReAddAllToCart = () => {
+  const handleReAddAllToCart = async () => {
     if (!foundOrder || !foundOrder.items) return;
 
     clearCart();
+    const liveProducts = await ProductService.getAllProducts();
+
     foundOrder.items.forEach((item) => {
-      const dbProd = INITIAL_PRODUCTS.find((p) => p.id === item.product_id);
+      const dbProd = liveProducts.find((p) => p.id === item.product_id);
       if (dbProd) {
         addToCart(dbProd, item.quantity);
       }

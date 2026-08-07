@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, MapPin, Sparkles, Search, SlidersHorizontal, ChevronDown, LayoutGrid, List } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { INITIAL_DELIVERY_ZONES, INITIAL_CATEGORIES, INITIAL_PRODUCTS } from '@/lib/mockData';
+import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
 import { Category } from '@/types';
 
 interface HeaderProps {
@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   viewMode,
   onViewModeChange,
   onOpenCart,
-  categories = INITIAL_CATEGORIES,
+  categories = [],
 }) => {
   const { itemCount, subtotal, selectedZone, setSelectedZone, minOrderThreshold, isMinOrderReached } = useCart();
   const [showZonePicker, setShowZonePicker] = useState(false);
@@ -174,18 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="truncate max-w-[75px] sm:max-w-[130px]">
                 {selectedCategory === 'all'
                   ? 'Category'
-                  : INITIAL_CATEGORIES.find((c) => c.id === selectedCategory)?.name || 'Category'}
-              </span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  selectedCategory !== 'all'
-                    ? 'bg-slate-950/20 text-slate-950'
-                    : 'bg-slate-200 text-slate-600'
-                }`}
-              >
-                {selectedCategory === 'all'
-                  ? INITIAL_PRODUCTS.length
-                  : INITIAL_PRODUCTS.filter((p) => p.category_id === selectedCategory).length}
+                  : categories.find((c: Category) => c.id === selectedCategory)?.name || 'Category'}
               </span>
             </div>
             <ChevronDown
@@ -206,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="absolute right-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
                 <div className="text-[10px] font-extrabold text-slate-400 px-2.5 py-1.5 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 mb-1">
                   <span>Select Category</span>
-                  <span className="text-[9px] text-amber-600 font-bold">{INITIAL_CATEGORIES.length} Total</span>
+                  <span className="text-[9px] text-amber-600 font-bold">{categories.length} Total</span>
                 </div>
 
                 <button
@@ -221,19 +210,9 @@ export const Header: React.FC<HeaderProps> = ({
                   }`}
                 >
                   <span>All Categories</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      selectedCategory === 'all'
-                        ? 'bg-slate-950/20 text-slate-950'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {INITIAL_PRODUCTS.length}
-                  </span>
                 </button>
 
-                {categories.map((cat) => {
-                  const count = INITIAL_PRODUCTS.filter((p) => p.category_id === cat.id).length;
+                {categories.map((cat: Category) => {
                   const isSelected = selectedCategory === cat.id;
                   return (
                     <button
@@ -249,15 +228,6 @@ export const Header: React.FC<HeaderProps> = ({
                       }`}
                     >
                       <span className="truncate">{cat.name}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                          isSelected
-                            ? 'bg-slate-950/20 text-slate-950'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {count}
-                      </span>
                     </button>
                   );
                 })}

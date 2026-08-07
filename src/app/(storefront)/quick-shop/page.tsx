@@ -1,16 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Zap, ShoppingBag, Plus, Minus, ArrowRight } from 'lucide-react';
-import { INITIAL_PRODUCTS } from '@/lib/mockData';
 import { useCart } from '@/context/CartContext';
+import { ProductService } from '@/lib/services/product.service';
+import { Product } from '@/types';
 
 export default function QuickShopPage() {
   const { cart, addToCart, updateQuantity, subtotal, itemCount, isMinOrderReached, selectedZone, minOrderThreshold } = useCart();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredProducts = INITIAL_PRODUCTS.filter(
+  useEffect(() => {
+    async function loadData() {
+      const data = await ProductService.getAllProducts();
+      setProducts(data);
+    }
+    loadData();
+  }, []);
+
+  const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase())

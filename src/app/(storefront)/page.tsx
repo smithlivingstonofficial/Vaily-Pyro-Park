@@ -9,7 +9,6 @@ import { QuickAddListItem } from '@/components/storefront/QuickAddListItem';
 import { QuickViewModal } from '@/components/storefront/QuickViewModal';
 import { CartDrawer } from '@/components/storefront/CartDrawer';
 import { Footer } from '@/components/storefront/Footer';
-import { INITIAL_COMBOS } from '@/lib/mockData';
 import { Product, Category, Combo } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { ProductService } from '@/lib/services/product.service';
@@ -17,6 +16,7 @@ import { ProductService } from '@/lib/services/product.service';
 export default function StorefrontPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [combos, setCombos] = useState<Combo[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -26,12 +26,14 @@ export default function StorefrontPage() {
 
   useEffect(() => {
     async function loadDbData() {
-      const [fetchedProducts, fetchedCategories] = await Promise.all([
+      const [fetchedProducts, fetchedCategories, fetchedCombos] = await Promise.all([
         ProductService.getAllProducts(),
         ProductService.getCategories(),
+        ProductService.getCombos(),
       ]);
       setProducts(fetchedProducts);
       setCategories(fetchedCategories);
+      setCombos(fetchedCombos);
     }
     loadDbData();
   }, []);
@@ -167,67 +169,69 @@ export default function StorefrontPage() {
           </section>
 
           {/* Curated Combos Section */}
-          <section className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-100 p-4 sm:p-6 rounded-3xl border border-amber-500/20 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm shadow-2xs">
-                  <Gift className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="font-black text-slate-950 text-base">Assortment Gift Boxes</h2>
-                  <span className="text-xs font-bold text-amber-700">Direct Factory Value Packs</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {INITIAL_COMBOS.map((combo) => (
-                <div
-                  key={combo.id}
-                  className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex flex-col sm:flex-row items-center gap-4"
-                >
-                  <img
-                    src={combo.image_url || '/images/combo_box.png'}
-                    alt={combo.name}
-                    className="w-24 h-24 object-cover rounded-xl border border-slate-200 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0 space-y-1.5 text-center sm:text-left">
-                    <div className="flex items-center justify-center sm:justify-start gap-2">
-                      <span className="bg-red-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded uppercase">
-                        GIFT BOX
-                      </span>
-                      <span className="text-xs font-bold text-emerald-600">
-                        SAVE ₹{(combo.mrp - combo.price).toLocaleString()}
-                      </span>
-                    </div>
-                    <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
-                      {combo.name}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                      {combo.description}
-                    </p>
-                    <div className="pt-1 flex items-center justify-between">
-                      <div>
-                        <span className="text-base font-black text-slate-950 font-mono">
-                          ₹{combo.price.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-slate-400 line-through ml-2 font-mono">
-                          ₹{combo.mrp.toLocaleString()}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleAddComboToCart(combo)}
-                        className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Add Box</span>
-                      </button>
-                    </div>
+          {combos.length > 0 && (
+            <section className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-100 p-4 sm:p-6 rounded-3xl border border-amber-500/20 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm shadow-2xs">
+                    <Gift className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="font-black text-slate-950 text-base">Assortment Gift Boxes</h2>
+                    <span className="text-xs font-bold text-amber-700">Direct Factory Value Packs</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {combos.map((combo) => (
+                  <div
+                    key={combo.id}
+                    className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex flex-col sm:flex-row items-center gap-4"
+                  >
+                    <img
+                      src={combo.image_url || '/images/combo_box.png'}
+                      alt={combo.name}
+                      className="w-24 h-24 object-cover rounded-xl border border-slate-200 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0 space-y-1.5 text-center sm:text-left">
+                      <div className="flex items-center justify-center sm:justify-start gap-2">
+                        <span className="bg-red-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded uppercase">
+                          GIFT BOX
+                        </span>
+                        <span className="text-xs font-bold text-emerald-600">
+                          SAVE ₹{(combo.mrp - combo.price).toLocaleString()}
+                        </span>
+                      </div>
+                      <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
+                        {combo.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                        {combo.description}
+                      </p>
+                      <div className="pt-1 flex items-center justify-between">
+                        <div>
+                          <span className="text-base font-black text-slate-950 font-mono">
+                            ₹{combo.price.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-slate-400 line-through ml-2 font-mono">
+                            ₹{combo.mrp.toLocaleString()}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleAddComboToCart(combo)}
+                          className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Add Box</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
         {/* Mobile Sticky Quick Checkout Bar */}

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
-import { Product, Category, DeliveryZone } from '@/types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
+import { Product, Category, DeliveryZone, Combo } from '@/types';
+import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
 
 export class ProductService {
   private static getSupabase() {
@@ -9,7 +9,6 @@ export class ProductService {
 
   /**
    * Fetch all active categories from Supabase DB.
-   * If empty in Supabase, fallback to INITIAL_CATEGORIES.
    */
   static async getCategories(): Promise<Category[]> {
     try {
@@ -19,19 +18,16 @@ export class ProductService {
         .select('*')
         .order('display_order', { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        return INITIAL_CATEGORIES;
-      }
+      if (error || !data) return [];
       return data as Category[];
     } catch (e) {
-      console.warn('Falling back to default categories:', e);
-      return INITIAL_CATEGORIES;
+      console.warn('Failed to fetch categories from Supabase:', e);
+      return [];
     }
   }
 
   /**
    * Fetch all products from Supabase DB.
-   * If empty in Supabase, fallback to INITIAL_PRODUCTS.
    */
   static async getAllProducts(): Promise<Product[]> {
     try {
@@ -40,9 +36,7 @@ export class ProductService {
         .from('products')
         .select('*, category:categories(*)');
 
-      if (error || !data || data.length === 0) {
-        return INITIAL_PRODUCTS;
-      }
+      if (error || !data) return [];
 
       return data.map((item: any) => ({
         id: item.id,
@@ -63,8 +57,37 @@ export class ProductService {
         category: item.category,
       }));
     } catch (e) {
-      console.warn('Falling back to default products:', e);
-      return INITIAL_PRODUCTS;
+      console.warn('Failed to fetch products from Supabase:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch active combos/assortment boxes from Supabase DB.
+   */
+  static async getCombos(): Promise<Combo[]> {
+    try {
+      const supabase = this.getSupabase();
+      const { data, error } = await supabase
+        .from('combos')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error || !data) return [];
+
+      return data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        price: Number(c.price),
+        mrp: Number(c.mrp),
+        image_url: c.image_url,
+        is_active: c.is_active,
+      }));
+    } catch (e) {
+      console.warn('Failed to fetch combos from Supabase:', e);
+      return [];
     }
   }
 
