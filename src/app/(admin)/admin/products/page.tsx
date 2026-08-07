@@ -35,6 +35,16 @@ export default function AdminProductsPage() {
       p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleQuickAddStock = async (product: Product, addAmount: number) => {
+    const newStock = (product.stock || 0) + addAmount;
+    setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, stock: newStock } : p)));
+    try {
+      await ProductService.updateProduct(product.id, { stock: newStock });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleToggleActive = async (productId: string, currentStatus: boolean) => {
     const newStatus = await ProductService.toggleProductActive(productId, currentStatus);
     setProducts((prev) =>
@@ -187,7 +197,25 @@ export default function AdminProductsPage() {
                         {discount}% OFF
                       </span>
                     </td>
-                    <td className="p-4 font-black text-slate-900">{product.stock || 0}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-slate-950 font-mono text-sm">{product.stock || 0}</span>
+                        <button
+                          onClick={() => handleQuickAddStock(product, 10)}
+                          className="px-1.5 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-950 font-black text-[10px] rounded-md transition-colors cursor-pointer"
+                          title="Quick Add 10 Stock"
+                        >
+                          +10
+                        </button>
+                        <button
+                          onClick={() => handleQuickAddStock(product, 50)}
+                          className="px-1.5 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 font-black text-[10px] rounded-md transition-colors cursor-pointer"
+                          title="Quick Add 50 Stock"
+                        >
+                          +50
+                        </button>
+                      </div>
+                    </td>
                     <td className="p-4">
                       <button
                         onClick={() => handleToggleActive(product.id, product.is_active)}

@@ -21,6 +21,7 @@ import {
   Truck,
   Users,
   Settings,
+  Plus,
 } from 'lucide-react';
 import { AuthService } from '@/lib/services/auth.service';
 
@@ -246,6 +247,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </span>
             </div>
           </div>
+
+          <Link
+            href="/admin/products"
+            className="w-full mb-3 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-98"
+          >
+            <Plus className="w-4 h-4" /> Quick Add Product
+          </Link>
 
           <nav className="space-y-1">
             {navItems.map((item) => {
