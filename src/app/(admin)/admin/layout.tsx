@@ -17,6 +17,10 @@ import {
   LogOut,
   UserCheck,
   AlertTriangle,
+  SlidersHorizontal,
+  Truck,
+  Users,
+  Settings,
 } from 'lucide-react';
 import { AuthService } from '@/lib/services/auth.service';
 
@@ -83,8 +87,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Order Processing', icon: ShoppingCart },
-    { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/products', label: 'Products Catalogue', icon: Package },
+    { href: '/admin/categories', label: 'Categories', icon: SlidersHorizontal },
     { href: '/admin/inventory', label: 'Inventory Ledger', icon: Warehouse },
+    { href: '/admin/delivery-zones', label: 'Delivery & Freight', icon: Truck },
+    { href: '/admin/customers', label: 'Customer Directory', icon: Users },
+    { href: '/admin/settings', label: 'Store Settings', icon: Settings },
   ];
 
   const currentPageLabel = navItems.find((item) => item.href === pathname)?.label || 'Console';

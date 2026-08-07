@@ -27,6 +27,109 @@ export class ProductService {
   }
 
   /**
+   * Create new category in Supabase DB.
+   */
+  static async createCategory(categoryData: Partial<Category>): Promise<Category> {
+    const supabase = this.getSupabase();
+    const slug = categoryData.slug || (categoryData.name || 'category').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+    const payload = {
+      name: categoryData.name,
+      slug,
+      description: categoryData.description || '',
+      icon_name: categoryData.icon_name || 'Sparkles',
+      display_order: categoryData.display_order || 1,
+      is_active: categoryData.is_active !== undefined ? categoryData.is_active : true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('categories')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Supabase createCategory error:', error);
+      throw error || new Error('Failed to create category.');
+    }
+    return data as Category;
+  }
+
+  /**
+   * Update category in Supabase DB.
+   */
+  static async updateCategory(id: string, categoryData: Partial<Category>): Promise<Category> {
+    const supabase = this.getSupabase();
+    const payload: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (categoryData.name) {
+      payload.name = categoryData.name;
+      payload.slug = categoryData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+    if (categoryData.description !== undefined) payload.description = categoryData.description;
+    if (categoryData.icon_name !== undefined) payload.icon_name = categoryData.icon_name;
+    if (categoryData.display_order !== undefined) payload.display_order = categoryData.display_order;
+    if (categoryData.is_active !== undefined) payload.is_active = categoryData.is_active;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Supabase updateCategory error:', error);
+      throw error || new Error('Failed to update category.');
+    }
+    return data as Category;
+  }
+
+  /**
+   * Delete category from Supabase DB.
+   */
+  static async deleteCategory(id: string): Promise<boolean> {
+    const supabase = this.getSupabase();
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) {
+      console.error('Supabase deleteCategory error:', error);
+      throw error;
+    }
+    return true;
+  }
+
+  /**
+   * Update delivery zone threshold and fees in Supabase DB.
+   */
+  static async updateDeliveryZone(id: string, zoneData: Partial<DeliveryZone>): Promise<DeliveryZone> {
+    const supabase = this.getSupabase();
+    const payload: any = {};
+
+    if (zoneData.zone_name) payload.zone_name = zoneData.zone_name;
+    if (zoneData.min_order_amount !== undefined) payload.min_order_amount = zoneData.min_order_amount;
+    if (zoneData.delivery_fee !== undefined) payload.delivery_fee = zoneData.delivery_fee;
+    if (zoneData.estimated_days !== undefined) payload.estimated_days = zoneData.estimated_days;
+    if (zoneData.is_active !== undefined) payload.is_active = zoneData.is_active;
+
+    const { data, error } = await supabase
+      .from('delivery_zones')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Supabase updateDeliveryZone error:', error);
+      throw error || new Error('Failed to update delivery zone.');
+    }
+    return data as DeliveryZone;
+  }
+
+  /**
    * Fetch all products from Supabase DB.
    */
   static async getAllProducts(): Promise<Product[]> {
