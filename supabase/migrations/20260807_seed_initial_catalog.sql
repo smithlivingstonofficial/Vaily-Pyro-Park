@@ -1,10 +1,15 @@
 -- ============================================================================
--- VAILY PYRO PARK: TEST SAMPLE DATA SQL MIGRATION SCRIPT (VALID HEX UUIDs)
+-- VAILY PYRO PARK: TEST SAMPLE DATA SQL MIGRATION SCRIPT
 -- ============================================================================
 -- Execute this SQL in your Supabase SQL Editor to populate sample test data.
--- Includes Categories, Fireworks Products, Warehouse Stock Balances, Delivery Zones,
--- and a Sample Production Test Order.
 -- ============================================================================
+
+-- Ensure optional tracking & payment columns exist on orders table
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS courier_partner VARCHAR(255);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(255);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT true;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(100) DEFAULT 'UPI Direct';
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- 1. SEED PRODUCT CATEGORIES
 INSERT INTO public.categories (id, name, slug, description, icon_name, display_order, is_active)
