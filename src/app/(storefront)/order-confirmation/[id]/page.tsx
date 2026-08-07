@@ -1,0 +1,234 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import confetti from 'canvas-confetti';
+import { CheckCircle2, MessageSquare, Package, ArrowRight, Truck, MapPin, Calendar, Clock, ShoppingBag } from 'lucide-react';
+import { OrderService } from '@/lib/services/order.service';
+import { WhatsAppService } from '@/lib/services/whatsapp.service';
+import { Order, OrderStatus } from '@/types';
+
+export default function OrderConfirmationPage() {
+  const params = useParams();
+  const orderId = params.id as string;
+
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadOrder() {
+      if (!orderId) return;
+      const found = await OrderService.getOrderById(orderId);
+      setOrder(found);
+      setLoading(false);
+
+      if (found) {
+        // Trigger celebratory confetti burst
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      }
+    }
+    loadOrder();
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold text-slate-600">Retrieving Order Details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl max-w-md w-full text-center border border-slate-200 shadow-xl">
+          <h2 className="font-extrabold text-xl text-slate-900 mb-2">Order Not Found</h2>
+          <p className="text-xs text-slate-500 mb-6">We could not locate an order matching ID {orderId}.</p>
+          <Link
+            href="/"
+            className="px-6 py-3 bg-amber-500 text-slate-950 font-black rounded-xl text-xs inline-block"
+          >
+            RETURN TO HOME
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const whatsappUrl = WhatsAppService.generateOrderWhatsAppLink(order);
+
+  // Status Stepper calculation
+  const statusSteps: { status: OrderStatus; label: string }[] = [
+    { status: 'PENDING', label: 'Order Placed' },
+    { status: 'CONFIRMED', label: 'Confirmed' },
+    { status: 'PACKING', label: 'Packing' },
+    { status: 'PACKED', label: 'Packed' },
+    { status: 'DISPATCHED', label: 'Dispatched' },
+    { status: 'DELIVERED', label: 'Delivered' },
+  ];
+
+  const statusOrderIndexMap: Record<OrderStatus, number> = {
+    PENDING: 0,
+    CONFIRMED: 1,
+    PACKING: 2,
+    PACKED: 3,
+    DISPATCHED: 4,
+    DELIVERED: 5,
+    CANCELLED: -1,
+  };
+
+  const currentStepIndex = statusOrderIndexMap[order.status];
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Success Header Box */}
+        <div className="bg-gradient-to-br from-slate-950 to-amber-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-amber-500/30 text-center space-y-3">
+          <div className="w-16 h-16 bg-amber-500 text-slate-950 rounded-full flex items-center justify-center mx-auto shadow-lg glow-gold">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <span className="bg-amber-500/20 text-amber-300 font-extrabold text-xs px-3 py-1 rounded-full inline-block border border-amber-500/30 uppercase tracking-widest">
+            ORDER SUCCESSFULLY PLACED
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Order #{order.order_number}
+          </h1>
+          <p className="text-xs text-slate-300 max-w-md mx-auto">
+            Your stock has been reserved in our Sivakasi warehouse. A copy has been saved to your session.
+          </p>
+
+          {/* Primary Action Button: Send to WhatsApp */}
+          <div className="pt-2">
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl transition-all active:scale-98"
+            >
+              <MessageSquare className="w-5 h-5 fill-slate-950" />
+              <span>SEND ORDER COPY TO WHATSAPP</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Status Tracker */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 className="font-extrabold text-sm text-slate-900 mb-4 flex items-center gap-2">
+            <Package className="w-4 h-4 text-amber-600" /> Live Order Tracking
+          </h3>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {statusSteps.map((step, idx) => {
+              const isPassed = idx <= currentStepIndex;
+              const isCurrent = idx === currentStepIndex;
+
+              return (
+                <div key={step.status} className="flex flex-col items-center text-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs mb-1.5 transition-all ${
+                      isCurrent
+                        ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-200'
+                        : isPassed
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-100 text-slate-400'
+                    }`}
+                  >
+                    {isPassed ? '✓' : idx + 1}
+                  </div>
+                  <span className={`text-[10px] font-bold ${isPassed ? 'text-slate-900' : 'text-slate-400'}`}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Order Details & Summary Card */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-slate-100 pb-4 text-xs">
+            <div>
+              <span className="text-slate-500 block mb-1 font-semibold">Shipping Address:</span>
+              <p className="font-bold text-slate-900">{order.customer_name}</p>
+              <p className="text-slate-700">{order.shipping_address}</p>
+              <p className="text-slate-700">{order.city}, {order.state} - {order.pincode}</p>
+              <p className="text-slate-900 font-extrabold mt-1">Mobile: {order.customer_mobile}</p>
+            </div>
+
+            <div>
+              <span className="text-slate-500 block mb-1 font-semibold">Order Information:</span>
+              <p className="text-slate-700">Date: {new Date(order.created_at).toLocaleDateString()}</p>
+              <p className="text-slate-700">Status: <span className="font-extrabold text-amber-600">{order.status}</span></p>
+              <p className="text-slate-700">Store Hub: Vaily Pyro Park, Sivakasi</p>
+            </div>
+          </div>
+
+          {/* Purchased Items List */}
+          <div>
+            <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider mb-3">Itemized Summary</h4>
+            <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+              {order.items?.map((item) => (
+                <div key={item.product_id} className="p-3 bg-slate-50 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-slate-900 block">{item.product_name}</span>
+                    <span className="text-slate-500">{item.quantity} x ₹{item.unit_price.toLocaleString()}</span>
+                  </div>
+                  <span className="font-extrabold text-slate-950">₹{item.total_price.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Financial Breakdown */}
+          <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span className="font-bold text-slate-900">₹{order.subtotal.toLocaleString()}</span>
+            </div>
+            {order.discount_amount > 0 && (
+              <div className="flex justify-between text-emerald-600 font-bold">
+                <span>Discounts Applied:</span>
+                <span>- ₹{order.discount_amount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Delivery Fee:</span>
+              <span className="font-bold text-slate-900">
+                {order.delivery_fee === 0 ? 'FREE' : `₹${order.delivery_fee}`}
+              </span>
+            </div>
+            <div className="flex justify-between text-base font-black text-slate-950 pt-2 border-t border-slate-200">
+              <span>Grand Total:</span>
+              <span className="text-amber-600">₹{order.grand_total.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="w-full sm:w-auto px-6 py-3 bg-slate-900 text-white font-bold rounded-xl text-xs text-center"
+          >
+            Back to Storefront
+          </Link>
+          <Link
+            href="/track-order"
+            className="w-full sm:w-auto px-6 py-3 bg-amber-500 text-slate-950 font-black rounded-xl text-xs text-center flex items-center justify-center gap-1.5"
+          >
+            <span>TRACK ALL ORDERS</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,387 @@
+'use client';
+
+import React, { useEffect, useState, useMemo } from 'react';
+import Papa from 'papaparse';
+import { OrderService } from '@/lib/services/order.service';
+import { Order, OrderStatus } from '@/types';
+
+// Import Modular Components
+import { OrderMetrics } from '@/components/admin/orders/OrderMetrics';
+import { OrderFilterToolbar } from '@/components/admin/orders/OrderFilterToolbar';
+import { BatchActionBar } from '@/components/admin/orders/BatchActionBar';
+import { OrdersTableView } from '@/components/admin/orders/OrdersTableView';
+import { OrdersCardView } from '@/components/admin/orders/OrdersCardView';
+import { OrderDetailsDrawer } from '@/components/admin/orders/OrderDetailsDrawer';
+import { PackingSlipModal } from '@/components/admin/orders/PackingSlipModal';
+import {
+  StatusConfirmationModal,
+  PendingStatusChange,
+} from '@/components/admin/orders/StatusConfirmationModal';
+import {
+  ToastNotification,
+  ToastMessage,
+} from '@/components/admin/orders/ToastNotification';
+
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [activeStatusTab, setActiveStatusTab] = useState<string>('ALL');
+  const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
+  const [dateFilter, setDateFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [packingSlipOrder, setPackingSlipOrder] = useState<Order | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
+
+  // Real-time Toast Messages state
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
+
+  const handleDismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  useEffect(() => {
+    async function fetchOrders() {
+      const data = await OrderService.getAllOrders();
+      setOrders(data);
+    }
+    fetchOrders();
+  }, []);
+
+  // Filtered Orders Computation
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesTab = activeStatusTab === 'ALL' || order.status === activeStatusTab;
+      const matchesPayment =
+        paymentFilter === 'ALL' ||
+        (paymentFilter === 'PAID' && order.is_paid) ||
+        (paymentFilter === 'UNPAID' && !order.is_paid);
+
+      const matchesSearch =
+        !searchQuery ||
+        order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.customer_mobile.includes(searchQuery) ||
+        order.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.pincode.includes(searchQuery);
+
+      let matchesDate = true;
+      if (dateFilter !== 'ALL') {
+        const created = new Date(order.created_at);
+        const now = new Date();
+        if (dateFilter === 'Today') {
+          matchesDate = created.toDateString() === now.toDateString();
+        } else if (dateFilter === 'Last 7 Days') {
+          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          matchesDate = created >= sevenDaysAgo;
+        } else if (dateFilter === 'This Month') {
+          matchesDate =
+            created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+        }
+      }
+
+      return matchesTab && matchesPayment && matchesSearch && matchesDate;
+    });
+  }, [orders, activeStatusTab, paymentFilter, dateFilter, searchQuery]);
+
+  // Request Status Change Modal
+  const requestStatusChange = (
+    orderId: string,
+    orderNumber: string,
+    currentStatus: OrderStatus,
+    newStatus: OrderStatus
+  ) => {
+    if (currentStatus === newStatus) return;
+    setPendingStatusChange({
+      orderId,
+      orderNumber,
+      currentStatus,
+      newStatus,
+    });
+  };
+
+  // Confirm Status Change
+  const confirmStatusChange = async () => {
+    if (!pendingStatusChange) return;
+
+    const { orderId, newStatus } = pendingStatusChange;
+    const updated = await OrderService.updateOrderStatus(orderId, newStatus);
+
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder(updated);
+    }
+
+    addToast(`Order #${pendingStatusChange.orderNumber} updated to ${newStatus}`, 'success');
+    setPendingStatusChange(null);
+  };
+
+  // Toggle Payment Settlement
+  const handleTogglePaymentSettlement = async (orderId: string) => {
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+    const newPaidState = !target.is_paid;
+
+    const updated: Order = {
+      ...target,
+      is_paid: newPaidState,
+      updated_at: new Date().toISOString(),
+    };
+
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder(updated);
+    }
+
+    addToast(
+      `Payment marked as ${newPaidState ? 'PAID ✓' : 'UNPAID COD'} for ${target.order_number}`,
+      'info'
+    );
+  };
+
+  // Save Logistics Info
+  const handleSaveLogistics = async (
+    orderId: string,
+    courierPartner: string,
+    trackingNumber: string,
+    estDeliveryDays: string,
+    adminNotes?: string
+  ) => {
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+
+    const newStatus: OrderStatus =
+      target.status === 'PENDING' ||
+      target.status === 'CONFIRMED' ||
+      target.status === 'PACKING' ||
+      target.status === 'PACKED'
+        ? 'DISPATCHED'
+        : target.status;
+
+    const updated = await OrderService.updateOrderStatus(orderId, newStatus, adminNotes);
+    updated.courier_partner = courierPartner;
+    updated.tracking_number = trackingNumber;
+    updated.estimated_delivery = estDeliveryDays;
+    updated.updated_at = new Date().toISOString();
+
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder(updated);
+    }
+  };
+
+  // Multi-Selection Handlers
+  const handleSelectAll = () => {
+    if (selectedOrderIds.length === filteredOrders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((o) => o.id));
+    }
+  };
+
+  const handleToggleOrderSelection = (id: string) => {
+    if (selectedOrderIds.includes(id)) {
+      setSelectedOrderIds(selectedOrderIds.filter((item) => item !== id));
+    } else {
+      setSelectedOrderIds([...selectedOrderIds, id]);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: OrderStatus) => {
+    for (const id of selectedOrderIds) {
+      await OrderService.updateOrderStatus(id, status);
+    }
+    const data = await OrderService.getAllOrders();
+    setOrders(data);
+    addToast(`Bulk updated ${selectedOrderIds.length} orders to ${status}`, 'success');
+    setSelectedOrderIds([]);
+  };
+
+  const handleBulkPaymentUpdate = async (isPaid: boolean) => {
+    setOrders((prev) =>
+      prev.map((o) => (selectedOrderIds.includes(o.id) ? { ...o, is_paid: isPaid } : o))
+    );
+    addToast(`Bulk updated ${selectedOrderIds.length} orders as ${isPaid ? 'PAID' : 'UNPAID'}`, 'info');
+    setSelectedOrderIds([]);
+  };
+
+  const handleExportCSV = () => {
+    const ordersToExport =
+      selectedOrderIds.length > 0
+        ? orders.filter((o) => selectedOrderIds.includes(o.id))
+        : filteredOrders;
+
+    const data = ordersToExport.map((o) => ({
+      'Order Number': o.order_number,
+      'Customer Name': o.customer_name,
+      'Mobile Number': o.customer_mobile,
+      'Shipping Address': `${o.shipping_address}, ${o.city}, ${o.state} - ${o.pincode}`,
+      City: o.city,
+      State: o.state,
+      Status: o.status,
+      'Payment Settled': o.is_paid ? 'YES' : 'NO',
+      Subtotal: o.subtotal,
+      'Delivery Fee': o.delivery_fee,
+      'Grand Total': o.grand_total,
+      'Courier Partner': o.courier_partner || '',
+      'Tracking LR': o.tracking_number || '',
+      'Created Date': new Date(o.created_at).toLocaleString('en-IN'),
+    }));
+
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Vaily_Pyro_Park_Orders_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    addToast(`Exported ${ordersToExport.length} orders to CSV`, 'success');
+  };
+
+  const handleResetFilters = () => {
+    setActiveStatusTab('ALL');
+    setPaymentFilter('ALL');
+    setDateFilter('ALL');
+    setSearchQuery('');
+    addToast('Order filters reset to default', 'info');
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Top Banner Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
+              Order Fulfillment Hub
+            </h1>
+            <span className="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+              Enterprise SaaS
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Manage Sivakasi warehouse dispatch, carrier tracking, invoice printing, and payment settlement ledger.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <button
+            onClick={handleExportCSV}
+            className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Operations Executive KPI Metric Strip */}
+      <OrderMetrics orders={orders} />
+
+      {/* Multi-Filter & Search Toolbar */}
+      <OrderFilterToolbar
+        orders={orders}
+        filteredOrders={filteredOrders}
+        activeStatusTab={activeStatusTab}
+        setActiveStatusTab={setActiveStatusTab}
+        paymentFilter={paymentFilter}
+        setPaymentFilter={setPaymentFilter}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        selectedOrderIds={selectedOrderIds}
+        onSelectAll={handleSelectAll}
+        onResetFilters={handleResetFilters}
+      />
+
+      {/* Main Orders Display Area */}
+      {filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-10 text-center shadow-2xs space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 mx-auto flex items-center justify-center font-bold text-xl border border-amber-200">
+            🔍
+          </div>
+          <p className="text-slate-700 text-sm font-bold">No orders found matching criteria.</p>
+          <p className="text-slate-400 text-xs">Try searching for a different order number, mobile, or city name.</p>
+          <button
+            onClick={handleResetFilters}
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-2xs transition-all cursor-pointer inline-block mt-2"
+          >
+            Reset Filters
+          </button>
+        </div>
+      ) : viewMode === 'table' ? (
+        <OrdersTableView
+          orders={filteredOrders}
+          selectedOrderIds={selectedOrderIds}
+          onToggleSelection={handleToggleOrderSelection}
+          onSelectAll={handleSelectAll}
+          onSelectOrder={(order) => setSelectedOrder(order)}
+          onPrintSlip={(order) => setPackingSlipOrder(order)}
+          onRequestStatusChange={requestStatusChange}
+          onTogglePaymentSettlement={handleTogglePaymentSettlement}
+        />
+      ) : (
+        <OrdersCardView
+          orders={filteredOrders}
+          selectedOrderIds={selectedOrderIds}
+          onToggleSelection={handleToggleOrderSelection}
+          onSelectOrder={(order) => setSelectedOrder(order)}
+          onPrintSlip={(order) => setPackingSlipOrder(order)}
+          onRequestStatusChange={requestStatusChange}
+          onTogglePaymentSettlement={handleTogglePaymentSettlement}
+        />
+      )}
+
+      {/* Floating Batch Operations Bar */}
+      <BatchActionBar
+        selectedCount={selectedOrderIds.length}
+        onBulkStatusUpdate={handleBulkStatusUpdate}
+        onBulkPaymentUpdate={handleBulkPaymentUpdate}
+        onExportCSV={handleExportCSV}
+        onDeselectAll={() => setSelectedOrderIds([])}
+      />
+
+      {/* Order Details Enterprise Slide-Over Sheet */}
+      <OrderDetailsDrawer
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onPrintSlip={(order) => setPackingSlipOrder(order)}
+        onRequestStatusChange={requestStatusChange}
+        onTogglePaymentSettlement={handleTogglePaymentSettlement}
+        onSaveLogistics={handleSaveLogistics}
+        onShowToast={addToast}
+      />
+
+      {/* Status Transition Confirmation Modal */}
+      <StatusConfirmationModal
+        pendingStatusChange={pendingStatusChange}
+        onCancel={() => setPendingStatusChange(null)}
+        onConfirm={confirmStatusChange}
+      />
+
+      {/* Packing Slip & Tax Invoice Modal */}
+      <PackingSlipModal
+        order={packingSlipOrder}
+        onClose={() => setPackingSlipOrder(null)}
+      />
+
+      {/* Toast Feedback Manager */}
+      <ToastNotification toasts={toasts} onDismiss={handleDismissToast} />
+    </div>
+  );
+}
