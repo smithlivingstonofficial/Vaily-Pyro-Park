@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-heading: var(--font-outfit), var(--font-jakarta), sans-serif;
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-poppins), 'Poppins', var(--font-inter), sans-serif;
 }
 
 @layer base {
@@ -37,12 +38,12 @@
   p,
   a,
   label {
-    font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading {
-    font-family: var(--font-outfit), var(--font-jakarta), sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-poppins), 'Poppins', var(--font-inter), sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 

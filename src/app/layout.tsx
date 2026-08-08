@@ -1,19 +1,19 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Outfit } from 'next/font/google';
+import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 
-const plusJakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  variable: '--font-inter',
   display: 'swap',
 });
 
-const outfit = Outfit({
+const poppins = Poppins({
   subsets: ['latin'],
   weight: ['500', '600', '700', '800', '900'],
-  variable: '--font-outfit',
+  variable: '--font-poppins',
   display: 'swap',
 });
 
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body className="font-sans antialiased text-slate-900 bg-slate-50 min-h-screen">
         <CartProvider>{children}</CartProvider>
       </body>

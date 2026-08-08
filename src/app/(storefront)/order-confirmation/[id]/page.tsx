@@ -102,7 +102,7 @@ export default function OrderConfirmationPage() {
             Order #{order.order_number}
           </h1>
           <p className="text-xs text-slate-300 max-w-md mx-auto">
-            Your stock has been reserved in our Sivakasi warehouse. A copy has been saved to your session.
+            Your order has been received! We will prepare and pack your items soon.
           </p>
 
           {/* Primary Action Button: Send to WhatsApp */}
@@ -173,7 +173,7 @@ export default function OrderConfirmationPage() {
 
           {/* Purchased Items List */}
           <div>
-            <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider mb-3">Itemized Summary</h4>
+            <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider mb-3">Items Ordered</h4>
             <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
               {order.items?.map((item) => (
                 <div key={item.product_id} className="p-3 bg-slate-50 flex items-center justify-between text-xs">
@@ -218,7 +218,7 @@ export default function OrderConfirmationPage() {
             href="/"
             className="w-full sm:w-auto px-6 py-3 bg-slate-900 text-white font-bold rounded-xl text-xs text-center"
           >
-            Back to Storefront
+            Back to Shop
           </Link>
           <Link
             href="/track-order"

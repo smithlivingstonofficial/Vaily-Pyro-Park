@@ -1,5 +1,5 @@
-import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
-import { OrderItem, Product } from '@/types';
+import { createClient } from '@/lib/supabase/client';
+import { DeliveryZone, OrderItem, Product } from '@/types';
 
 export interface CheckoutPayloadItem {
   product_id: string;
@@ -18,19 +18,70 @@ export interface CalculatedPricingResult {
   zoneName: string;
 }
 
+// Hard-coded fallback zones — only used if Supabase is unreachable at checkout time
+const FALLBACK_DELIVERY_ZONES: DeliveryZone[] = [
+  {
+    id: 'zone-tn',
+    zone_name: 'Tamil Nadu (Home Zone)',
+    state_codes: ['TN', 'Tamil Nadu'],
+    min_order_amount: 3000,
+    delivery_fee: 0,
+    estimated_days: '2-3 Days',
+    is_active: true,
+  },
+  {
+    id: 'zone-south',
+    zone_name: 'South India',
+    state_codes: ['PY', 'KL', 'KA', 'AP', 'TS', 'Puducherry', 'Kerala', 'Karnataka', 'Andhra Pradesh', 'Telangana'],
+    min_order_amount: 4000,
+    delivery_fee: 150,
+    estimated_days: '3-4 Days',
+    is_active: true,
+  },
+  {
+    id: 'zone-rest',
+    zone_name: 'Rest of India',
+    state_codes: ['ALL'],
+    min_order_amount: 5000,
+    delivery_fee: 250,
+    estimated_days: '5-7 Days',
+    is_active: true,
+  },
+];
+
 export class PricingService {
   /**
-   * Recalculates exact order price using live catalog products.
+   * Fetch active delivery zones from DB. Falls back to hardcoded if DB fails.
+   */
+  static async fetchDeliveryZones(): Promise<DeliveryZone[]> {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('delivery_zones')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error || !data || data.length === 0) return FALLBACK_DELIVERY_ZONES;
+      return data as DeliveryZone[];
+    } catch {
+      return FALLBACK_DELIVERY_ZONES;
+    }
+  }
+
+  /**
+   * Recalculates exact order price using live catalog products & DB delivery zones.
    * Client-sent unit prices or totals are strictly IGNORED.
    */
   static calculateOrderPricing(
     clientItems: CheckoutPayloadItem[],
     stateCode: string,
-    products: Product[] = []
+    products: Product[] = [],
+    zones: DeliveryZone[] = FALLBACK_DELIVERY_ZONES
   ): CalculatedPricingResult {
-    const zone = INITIAL_DELIVERY_ZONES.find((z) =>
-      z.state_codes.some((code) => code.toLowerCase() === stateCode.toLowerCase())
-    ) || INITIAL_DELIVERY_ZONES[INITIAL_DELIVERY_ZONES.length - 1];
+    const zone =
+      zones.find((z) =>
+        z.state_codes.some((code) => code.toLowerCase() === stateCode.toLowerCase())
+      ) ?? zones[zones.length - 1];
 
     let subtotal = 0;
     let totalMrp = 0;
@@ -39,7 +90,6 @@ export class PricingService {
     for (const clientItem of clientItems) {
       const dbProduct = products.find((p) => p.id === clientItem.product_id);
 
-      // If product not found in provided array, create a resilient fallback item from payload
       const sellingPrice = dbProduct ? dbProduct.selling_price : 100;
       const mrpPrice = dbProduct ? dbProduct.mrp : 150;
       const productName = dbProduct ? dbProduct.name : 'Sivakasi Fireworks Item';

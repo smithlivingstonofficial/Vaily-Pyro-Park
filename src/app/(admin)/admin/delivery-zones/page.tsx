@@ -63,10 +63,10 @@ export default function AdminDeliveryZonesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-            Delivery Zones & Freight Rates Manager
+            Delivery Areas & Charges
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
-            Configure regional Minimum Order Thresholds, freight shipping charges, and transport SLAs
+            Set the minimum order amount and delivery charge for each region
           </p>
         </div>
       </div>
@@ -97,13 +97,13 @@ export default function AdminDeliveryZonesPage() {
               {/* Threshold & Delivery Fee Cards */}
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 font-medium text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Min Order Threshold</span>
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Min. Order Amount</span>
                   <span className="font-black text-slate-950 font-mono text-sm">
                     ₹{zone.min_order_amount.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Delivery Fee</span>
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Delivery Charge</span>
                   <span className="font-black text-amber-700 font-mono text-sm">
                     {zone.delivery_fee === 0 ? 'FREE' : `₹${zone.delivery_fee}`}
                   </span>
@@ -113,7 +113,7 @@ export default function AdminDeliveryZonesPage() {
               {/* State Codes Tag Cloud */}
               <div>
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">
-                  Covered Regions / States:
+                  States Covered:
                 </span>
                 <div className="flex flex-wrap gap-1">
                   {zone.state_codes.map((code) => (
@@ -132,7 +132,7 @@ export default function AdminDeliveryZonesPage() {
               onClick={() => handleOpenEditModal(zone)}
               className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Edit className="w-3.5 h-3.5" /> Configure Threshold & Freight
+              <Edit className="w-3.5 h-3.5" /> Edit Settings
             </button>
           </div>
         ))}
@@ -144,7 +144,7 @@ export default function AdminDeliveryZonesPage() {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-slate-200 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-black text-slate-950 text-base">
-                Configure {selectedZone.zone_name}
+                Edit {selectedZone.zone_name}
               </h3>
               <button onClick={() => setSelectedZone(null)} className="p-1 rounded-xl bg-slate-100 text-slate-400">
                 <X className="w-4 h-4" />
@@ -157,7 +157,7 @@ export default function AdminDeliveryZonesPage() {
 
             <form onSubmit={handleSaveZone} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Minimum Order Amount (₹)</label>
+                <label className="block font-bold text-slate-700 mb-1">Min. Order Amount (₹)</label>
                 <input
                   type="number"
                   required
@@ -181,7 +181,7 @@ export default function AdminDeliveryZonesPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Estimated Transport Days</label>
+                <label className="block font-bold text-slate-700 mb-1">Delivery Time (e.g. 2-3 Days)</label>
                 <input
                   type="text"
                   required

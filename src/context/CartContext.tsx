@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, DeliveryZone } from '@/types';
-import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
 
 interface CartContextType {
   cart: CartItem[];
@@ -28,9 +27,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = 'vaily_pyro_cart_v1';
 const ZONE_STORAGE_KEY = 'vaily_pyro_zone_v1';
 
+// Default zone used before DB zones are loaded or if none saved in localStorage
+const DEFAULT_ZONE: DeliveryZone = {
+  id: 'zone-tn',
+  zone_name: 'Tamil Nadu (Home Zone)',
+  state_codes: ['TN', 'Tamil Nadu'],
+  min_order_amount: 3000,
+  delivery_fee: 0,
+  estimated_days: '2-3 Days',
+  is_active: true,
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedZone, setSelectedZone] = useState<DeliveryZone>(INITIAL_DELIVERY_ZONES[0]);
+  const [selectedZone, setSelectedZone] = useState<DeliveryZone>(DEFAULT_ZONE);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load cart and selected zone from localStorage on mount

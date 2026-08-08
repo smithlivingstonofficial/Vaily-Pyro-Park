@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { Product, Category, DeliveryZone, Combo } from '@/types';
-import { INITIAL_DELIVERY_ZONES } from '@/lib/mockData';
+import { localCache } from '@/lib/utils/cache.utils';
 
 export class ProductService {
   private static getSupabase() {
@@ -8,9 +8,20 @@ export class ProductService {
   }
 
   /**
-   * Fetch all active categories from Supabase DB.
+   * Manually invalidate local cache (e.g. after admin updates).
+   */
+  static clearCache(key?: string): void {
+    localCache.clear(key);
+  }
+
+  /**
+   * Fetch all active categories from Supabase DB (Cached 30 min).
    */
   static async getCategories(): Promise<Category[]> {
+    const cacheKey = 'categories';
+    const cached = localCache.get<Category[]>(cacheKey);
+    if (cached) return cached;
+
     try {
       const supabase = this.getSupabase();
       const { data, error } = await supabase
@@ -19,7 +30,9 @@ export class ProductService {
         .order('display_order', { ascending: true });
 
       if (error || !data) return [];
-      return data as Category[];
+      const categories = data as Category[];
+      localCache.set(cacheKey, categories, 30 * 60 * 1000); // 30 min TTL
+      return categories;
     } catch (e) {
       console.warn('Failed to fetch categories from Supabase:', e);
       return [];
@@ -54,6 +67,8 @@ export class ProductService {
       console.error('Supabase createCategory error:', error);
       throw error || new Error('Failed to create category.');
     }
+
+    localCache.clear('categories');
     return data as Category;
   }
 
@@ -86,6 +101,8 @@ export class ProductService {
       console.error('Supabase updateCategory error:', error);
       throw error || new Error('Failed to update category.');
     }
+
+    localCache.clear('categories');
     return data as Category;
   }
 
@@ -99,6 +116,7 @@ export class ProductService {
       console.error('Supabase deleteCategory error:', error);
       throw error;
     }
+    localCache.clear('categories');
     return true;
   }
 
@@ -126,13 +144,19 @@ export class ProductService {
       console.error('Supabase updateDeliveryZone error:', error);
       throw error || new Error('Failed to update delivery zone.');
     }
+
+    localCache.clear('delivery_zones');
     return data as DeliveryZone;
   }
 
   /**
-   * Fetch all products from Supabase DB.
+   * Fetch all products from Supabase DB (Cached 10 min).
    */
   static async getAllProducts(): Promise<Product[]> {
+    const cacheKey = 'products_all';
+    const cached = localCache.get<Product[]>(cacheKey);
+    if (cached) return cached;
+
     try {
       const supabase = this.getSupabase();
       const { data, error } = await supabase
@@ -141,7 +165,7 @@ export class ProductService {
 
       if (error || !data) return [];
 
-      return data.map((item: any) => ({
+      const mapped: Product[] = data.map((item: any) => ({
         id: item.id,
         category_id: item.category_id,
         name: item.name,
@@ -159,6 +183,9 @@ export class ProductService {
         stock: item.stock ?? 100,
         category: item.category,
       }));
+
+      localCache.set(cacheKey, mapped, 10 * 60 * 1000); // 10 min TTL
+      return mapped;
     } catch (e) {
       console.warn('Failed to fetch products from Supabase:', e);
       return [];
@@ -201,7 +228,6 @@ export class ProductService {
       throw error || new Error('Failed to create product in database.');
     }
 
-    // Insert stock balance into inventory table
     try {
       await supabase.from('inventory').insert({
         product_id: data.id,
@@ -213,6 +239,7 @@ export class ProductService {
       console.warn('Inventory initial stock insert error:', invErr);
     }
 
+    localCache.clear('products_all');
     return {
       id: data.id,
       category_id: data.category_id,
@@ -271,6 +298,7 @@ export class ProductService {
       throw error || new Error('Failed to update product in database.');
     }
 
+    localCache.clear('products_all');
     return {
       id: data.id,
       category_id: data.category_id,
@@ -286,7 +314,7 @@ export class ProductService {
       is_featured: data.is_featured,
       is_best_seller: data.is_best_seller,
       sound_level: data.sound_level,
-      stock: productData.stock ?? 100,
+      stock: data.stock ?? 100,
       category: data.category,
     };
   }
@@ -297,36 +325,49 @@ export class ProductService {
   static async deleteProduct(id: string): Promise<boolean> {
     const supabase = this.getSupabase();
     const { error } = await supabase.from('products').delete().eq('id', id);
-
     if (error) {
       console.error('Supabase deleteProduct error:', error);
       throw error;
     }
+    localCache.clear('products_all');
     return true;
   }
 
   /**
    * Bulk insert/upsert products from CSV import into Supabase DB.
    */
-  static async bulkCreateProducts(productsList: Partial<Product>[]): Promise<boolean> {
+  static async bulkCreateProducts(productsList: (Partial<Product> & { category?: string; stock?: number })[]): Promise<boolean> {
     const supabase = this.getSupabase();
 
-    const payloads = productsList.map((p, idx) => ({
-      name: p.name,
-      slug: (p.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-') + `-${Date.now()}-${idx}`,
-      sku: p.sku || `SKU-${Date.now()}-${idx}`,
-      description: p.description || '',
-      pack_size: p.pack_size || '1 Box',
-      mrp: p.mrp || 0,
-      selling_price: p.selling_price || 0,
-      image_url: p.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-      is_active: p.is_active !== undefined ? p.is_active : true,
-      is_featured: p.is_featured || false,
-      is_best_seller: p.is_best_seller || false,
-      sound_level: p.sound_level || 'Medium',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
+    const { data: categories } = await supabase.from('categories').select('id, name');
+    const categoryMap = new Map<string, string>();
+    if (categories) {
+      categories.forEach((c) => categoryMap.set(c.name.toLowerCase().trim(), c.id));
+    }
+    const defaultCategoryId = categories?.[0]?.id || null;
+
+    const payloads = productsList.map((p, idx) => {
+      const catName = p.category ? p.category.toLowerCase().trim() : '';
+      const catId = categoryMap.get(catName) || defaultCategoryId;
+
+      return {
+        category_id: catId,
+        name: p.name,
+        slug: (p.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-') + `-${Date.now()}-${idx}`,
+        sku: p.sku || `SKU-${Date.now()}-${idx}`,
+        description: p.description || `${p.name} - Authentic Sivakasi Fireworks.`,
+        pack_size: p.pack_size || '1 Box',
+        mrp: p.mrp || 0,
+        selling_price: p.selling_price || 0,
+        image_url: p.image_url || null,
+        is_active: p.is_active !== undefined ? p.is_active : true,
+        is_featured: p.is_featured || false,
+        is_best_seller: p.is_best_seller || false,
+        sound_level: p.sound_level || 'Medium',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
 
     const { data: inserted, error } = await supabase
       .from('products')
@@ -341,9 +382,9 @@ export class ProductService {
     if (inserted && inserted.length > 0) {
       const invPayloads = inserted.map((p, idx) => ({
         product_id: p.id,
-        available_stock: productsList[idx]?.stock || 100,
+        available_stock: productsList[idx]?.stock || 150,
         reserved_stock: 0,
-        safety_threshold: 20,
+        safety_threshold: 10,
       }));
 
       try {
@@ -353,23 +394,28 @@ export class ProductService {
       }
     }
 
+    localCache.clear('products_all');
     return true;
   }
 
   /**
-   * Fetch active combos/assortment boxes from Supabase DB.
+   * Fetch active combos for the storefront (Cached 15 min).
    */
   static async getCombos(): Promise<Combo[]> {
+    const cacheKey = 'combos';
+    const cached = localCache.get<Combo[]>(cacheKey);
+    if (cached) return cached;
+
     try {
       const supabase = this.getSupabase();
       const { data, error } = await supabase
         .from('combos')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
       if (error || !data) return [];
-
-      return data.map((c: any) => ({
+      const combos: Combo[] = data.map((c: any) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
@@ -379,16 +425,170 @@ export class ProductService {
         image_url: c.image_url,
         is_active: c.is_active,
       }));
+
+      localCache.set(cacheKey, combos, 15 * 60 * 1000); // 15 min TTL
+      return combos;
     } catch (e) {
-      console.warn('Failed to fetch combos from Supabase:', e);
+      console.warn('Failed to fetch combos:', e);
       return [];
     }
   }
 
   /**
-   * Fetch delivery zones from Supabase DB.
+   * Fetch ALL combos (including inactive) for the admin panel.
+   */
+  static async getAllCombos(): Promise<Combo[]> {
+    try {
+      const supabase = this.getSupabase();
+      const { data, error } = await supabase
+        .from('combos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) return [];
+      return data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug ?? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        description: c.description,
+        price: Number(c.price),
+        mrp: Number(c.mrp),
+        image_url: c.image_url,
+        is_active: c.is_active,
+      }));
+    } catch (e) {
+      console.warn('Failed to fetch all combos:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Create a new combo in Supabase DB.
+   */
+  static async createCombo(comboData: Partial<Combo>): Promise<Combo> {
+    const supabase = this.getSupabase();
+    const slug = (comboData.name ?? 'combo')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .concat(`-${Date.now()}`);
+
+    const payload = {
+      name: comboData.name,
+      slug,
+      description: comboData.description ?? '',
+      price: comboData.price ?? 0,
+      mrp: comboData.mrp ?? 0,
+      image_url: comboData.image_url ?? null,
+      is_active: comboData.is_active !== undefined ? comboData.is_active : true,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase.from('combos').insert(payload).select().single();
+    if (error || !data) {
+      console.error('createCombo error:', error);
+      throw error ?? new Error('Failed to create combo.');
+    }
+
+    localCache.clear('combos');
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      price: Number(data.price),
+      mrp: Number(data.mrp),
+      image_url: data.image_url,
+      is_active: data.is_active,
+    };
+  }
+
+  /**
+   * Update an existing combo in Supabase DB.
+   */
+  static async updateCombo(id: string, comboData: Partial<Combo>): Promise<Combo> {
+    const supabase = this.getSupabase();
+    const payload: any = {};
+    if (comboData.name !== undefined) {
+      payload.name = comboData.name;
+      payload.slug = comboData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+    if (comboData.description !== undefined) payload.description = comboData.description;
+    if (comboData.price !== undefined) payload.price = comboData.price;
+    if (comboData.mrp !== undefined) payload.mrp = comboData.mrp;
+    if (comboData.image_url !== undefined) payload.image_url = comboData.image_url;
+    if (comboData.is_active !== undefined) payload.is_active = comboData.is_active;
+
+    const { data, error } = await supabase.from('combos').update(payload).eq('id', id).select().single();
+    if (error || !data) {
+      console.error('updateCombo error:', error);
+      throw error ?? new Error('Failed to update combo.');
+    }
+
+    localCache.clear('combos');
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      price: Number(data.price),
+      mrp: Number(data.mrp),
+      image_url: data.image_url,
+      is_active: data.is_active,
+    };
+  }
+
+  /**
+   * Delete a combo from Supabase DB.
+   */
+  static async deleteCombo(id: string): Promise<boolean> {
+    const supabase = this.getSupabase();
+    const { error } = await supabase.from('combos').delete().eq('id', id);
+    if (error) {
+      console.error('deleteCombo error:', error);
+      throw error;
+    }
+    localCache.clear('combos');
+    return true;
+  }
+
+  /**
+   * Fetch ALL delivery zones from Supabase DB (Cached 30 min).
    */
   static async getDeliveryZones(): Promise<DeliveryZone[]> {
+    const cacheKey = 'delivery_zones';
+    const cached = localCache.get<DeliveryZone[]>(cacheKey);
+    if (cached) return cached;
+
+    const FALLBACK: DeliveryZone[] = [
+      {
+        id: 'zone-tn',
+        zone_name: 'Tamil Nadu (Home Zone)',
+        state_codes: ['TN', 'Tamil Nadu'],
+        min_order_amount: 3000,
+        delivery_fee: 0,
+        estimated_days: '2-3 Days',
+        is_active: true,
+      },
+      {
+        id: 'zone-south',
+        zone_name: 'South India',
+        state_codes: ['PY', 'KL', 'KA', 'AP', 'TS', 'Puducherry', 'Kerala', 'Karnataka', 'Andhra Pradesh', 'Telangana'],
+        min_order_amount: 4000,
+        delivery_fee: 150,
+        estimated_days: '3-4 Days',
+        is_active: true,
+      },
+      {
+        id: 'zone-rest',
+        zone_name: 'Rest of India',
+        state_codes: ['ALL'],
+        min_order_amount: 5000,
+        delivery_fee: 250,
+        estimated_days: '5-7 Days',
+        is_active: true,
+      },
+    ];
+
     try {
       const supabase = this.getSupabase();
       const { data, error } = await supabase
@@ -396,12 +596,12 @@ export class ProductService {
         .select('*')
         .eq('is_active', true);
 
-      if (error || !data || data.length === 0) {
-        return INITIAL_DELIVERY_ZONES;
-      }
-      return data as DeliveryZone[];
+      if (error || !data || data.length === 0) return FALLBACK;
+      const zones = data as DeliveryZone[];
+      localCache.set(cacheKey, zones, 30 * 60 * 1000); // 30 min TTL
+      return zones;
     } catch (e) {
-      return INITIAL_DELIVERY_ZONES;
+      return FALLBACK;
     }
   }
 
@@ -417,6 +617,7 @@ export class ProductService {
         .eq('id', id);
 
       if (error) throw error;
+      localCache.clear('products_all');
       return !currentStatus;
     } catch (e) {
       console.error('Failed to update product active state in Supabase:', e);

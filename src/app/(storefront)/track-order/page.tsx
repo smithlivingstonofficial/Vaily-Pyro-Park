@@ -50,7 +50,7 @@ export default function TrackOrderPage() {
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
           <div>
             <span className="text-amber-600 font-extrabold text-xs uppercase tracking-wider block mb-1">
-              Public Tracking Portal
+              Order Status
             </span>
             <h1 className="text-2xl font-black text-slate-950">Track Your Cracker Order</h1>
             <p className="text-xs text-slate-500 mt-1">

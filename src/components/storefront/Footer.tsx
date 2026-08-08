@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <Truck className="w-4 h-4 text-amber-600 shrink-0" />
-          <span className="font-bold text-slate-800">Safe Express Delivery</span>
+          <span className="font-bold text-slate-800">Safe Home Delivery</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -45,7 +45,6 @@ export const Footer: React.FC = () => {
           <Link href="/quick-shop" className="hover:text-amber-600 transition-colors">Quick Shop Mode</Link>
           <Link href="/buy-again" className="hover:text-amber-600 transition-colors">Buy Again</Link>
           <Link href="/track-order" className="hover:text-amber-600 transition-colors">Order Tracking</Link>
-          <Link href="/admin" className="text-amber-600 hover:text-amber-700 font-black">Admin Panel</Link>
         </div>
 
         <div className="text-[11px] text-slate-500 text-left md:text-right">

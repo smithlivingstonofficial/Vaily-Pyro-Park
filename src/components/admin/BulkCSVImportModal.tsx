@@ -14,7 +14,7 @@ interface BulkCSVImportModalProps {
 
 export const BulkCSVImportModal: React.FC<BulkCSVImportModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
   const [csvText, setCsvText] = useState('');
-  const [parsedData, setParsedData] = useState<Partial<Product>[]>([]);
+  const [parsedData, setParsedData] = useState<(Partial<Product> & { category?: string; stock?: number })[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isValidated, setIsValidated] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -22,10 +22,10 @@ export const BulkCSVImportModal: React.FC<BulkCSVImportModalProps> = ({ isOpen, 
 
   if (!isOpen) return null;
 
-  const sampleCsvTemplate = `name,sku,pack_size,mrp,selling_price,sound_level,stock
-10cm Silver Sparklers,SPK-10S,1 Box (10 Pcs),200,150,Silent,200
-20cm Golden Fountain,FPT-20G,1 Box (5 Pcs),450,320,Low,150
-25 Shot Sky Rocket Cake,ARS-25R,1 Piece,1800,1290,High,60`;
+  const sampleCsvTemplate = `name,sku,pack_size,mrp,selling_price,sound_level,stock,category,description
+"10cm Silver Sparklers",SPK-10S,"1 Box (10 Pcs)",200,150,Silent,150,"Sparklers","Bright electric silver sparklers, safe for celebration."
+"20cm Golden Fountain",FPT-20G,"1 Box (5 Pcs)",450,320,Low,150,"Flower Pots","Golden fountains showering sparks up to 10 feet."
+"25 Shot Sky Rocket Cake",ARS-25R,"1 Piece",1800,1290,High,150,"Fancy Shots","25 multi-color aerial sky burst cake."`;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,7 +69,7 @@ export const BulkCSVImportModal: React.FC<BulkCSVImportModalProps> = ({ isOpen, 
       complete: (results) => {
         const rows = results.data as any[];
         const errors: string[] = [];
-        const validRows: Partial<Product>[] = [];
+        const validRows: (Partial<Product> & { category?: string; stock?: number })[] = [];
 
         if (rows.length === 0) {
           errors.push('No valid rows found in CSV data.');
@@ -104,9 +104,11 @@ export const BulkCSVImportModal: React.FC<BulkCSVImportModalProps> = ({ isOpen, 
               mrp: isNaN(mrp) ? 0 : mrp,
               selling_price: isNaN(selling) ? 0 : selling,
               sound_level: row.sound_level || 'Medium',
-              stock: parseInt(row.stock) || 100,
+              stock: parseInt(row.stock) || 150,
+              description: row.description?.trim() || '',
+              category: row.category?.trim() || '',
               is_active: true,
-            });
+            } as any);
           }
         });
 

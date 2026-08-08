@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Papa from 'papaparse';
 import { OrderService } from '@/lib/services/order.service';
 import { Order, OrderStatus } from '@/types';
@@ -50,13 +50,17 @@ export default function AdminOrdersPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  useEffect(() => {
-    async function fetchOrders() {
-      const data = await OrderService.getAllOrders();
-      setOrders(data);
-    }
-    fetchOrders();
+  const fetchOrders = useCallback(async () => {
+    const data = await OrderService.getAllOrders();
+    setOrders(data);
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+    // Auto-refresh every 30 seconds to catch new orders
+    const interval = setInterval(fetchOrders, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   // Filtered Orders Computation
   const filteredOrders = useMemo(() => {
@@ -126,30 +130,26 @@ export default function AdminOrdersPage() {
     setPendingStatusChange(null);
   };
 
-  // Toggle Payment Settlement
+  // Toggle Payment Settlement — persists to DB
   const handleTogglePaymentSettlement = async (orderId: string) => {
     const target = orders.find((o) => o.id === orderId);
     if (!target) return;
     const newPaidState = !target.is_paid;
 
-    const updated: Order = {
-      ...target,
-      is_paid: newPaidState,
-      updated_at: new Date().toISOString(),
-    };
-
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(updated);
+    try {
+      const updated = await OrderService.markOrderPaid(orderId, newPaidState);
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      if (selectedOrder?.id === orderId) setSelectedOrder(updated);
+      addToast(
+        `Payment marked as ${newPaidState ? 'PAID ✓' : 'UNPAID COD'} for ${target.order_number}`,
+        'info'
+      );
+    } catch (err: any) {
+      addToast(`Failed to update payment: ${err.message}`, 'error');
     }
-
-    addToast(
-      `Payment marked as ${newPaidState ? 'PAID ✓' : 'UNPAID COD'} for ${target.order_number}`,
-      'info'
-    );
   };
 
-  // Save Logistics Info
+  // Save Logistics Info — persists ALL logistics fields to DB
   const handleSaveLogistics = async (
     orderId: string,
     courierPartner: string,
@@ -168,15 +168,19 @@ export default function AdminOrdersPage() {
         ? 'DISPATCHED'
         : target.status;
 
-    const updated = await OrderService.updateOrderStatus(orderId, newStatus, adminNotes);
-    updated.courier_partner = courierPartner;
-    updated.tracking_number = trackingNumber;
-    updated.estimated_delivery = estDeliveryDays;
-    updated.updated_at = new Date().toISOString();
-
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(updated);
+    try {
+      const updated = await OrderService.updateOrderLogistics(orderId, {
+        courier_partner: courierPartner,
+        tracking_number: trackingNumber,
+        estimated_delivery: estDeliveryDays,
+        admin_notes: adminNotes,
+        status: newStatus,
+      });
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      if (selectedOrder?.id === orderId) setSelectedOrder(updated);
+      addToast(`Logistics saved & order marked as ${newStatus}`, 'success');
+    } catch (err: any) {
+      addToast(`Failed to save logistics: ${err.message}`, 'error');
     }
   };
 
