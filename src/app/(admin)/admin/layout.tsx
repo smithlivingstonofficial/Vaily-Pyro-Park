@@ -88,14 +88,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/orders', label: 'Orders & Tracking', icon: ShoppingCart },
     { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/combos', label: 'Combos & Bundles', icon: Gift },
     { href: '/admin/categories', label: 'Categories', icon: SlidersHorizontal },
     { href: '/admin/inventory', label: 'Stock & Inventory', icon: Warehouse },
-    { href: '/admin/delivery-zones', label: 'Delivery Areas', icon: Truck },
-    { href: '/admin/customers', label: 'Customers', icon: Users },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   const currentPageLabel = navItems.find((item) => item.href === pathname)?.label || 'Console';

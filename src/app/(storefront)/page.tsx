@@ -6,6 +6,7 @@ import { Gift, ShoppingBag, ChevronRight, Sparkles, SlidersHorizontal, Flame, Vo
 import { Header } from '@/components/storefront/Header';
 import { QuickAddCard } from '@/components/storefront/QuickAddCard';
 import { QuickAddListItem } from '@/components/storefront/QuickAddListItem';
+import { PriceListTable } from '@/components/storefront/PriceListTable';
 import { QuickViewModal } from '@/components/storefront/QuickViewModal';
 import { CartDrawer } from '@/components/storefront/CartDrawer';
 import { Footer } from '@/components/storefront/Footer';
@@ -173,8 +174,6 @@ export default function StorefrontPage() {
           onSelectCategory={setSelectedCategory}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
           onOpenCart={() => setIsCartOpen(true)}
           categories={categories}
           zones={zones}
@@ -182,36 +181,28 @@ export default function StorefrontPage() {
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-5 space-y-5">
           {/* MAIN PRODUCT CATALOGUE SECTION WITH CATEGORY CLASSIFICATION HEADERS */}
-          <section className="space-y-6">
-            {/* Filter Active Notice / Header */}
-            <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div>
-                <h1 className="font-black text-slate-950 text-base sm:text-lg tracking-tight font-heading">
-                  {searchQuery ? (
-                    `Search Results for "${searchQuery}"`
-                  ) : selectedCategory === 'all' ? (
-                    'All Sivakasi Fireworks'
-                  ) : (
-                    categories.find((c) => c.id === selectedCategory)?.name || 'Category'
-                  )}
-                </h1>
-                <span className="text-xs text-slate-500 font-semibold">
-                  Showing {filteredProducts.length} items • Factory Direct Rates
-                </span>
-              </div>
-
-              {(searchQuery || selectedCategory !== 'all') && (
+          <section className="space-y-4">
+            {/* Active Search / Category Filter Badge (Only shown when filtered) */}
+            {(searchQuery || selectedCategory !== 'all') && (
+              <div className="flex items-center justify-between bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-200/80 text-xs font-semibold text-amber-900">
+                <div className="flex items-center gap-2 truncate">
+                  <span>Showing results for:</span>
+                  <span className="font-bold text-slate-900 truncate">
+                    {searchQuery ? `"${searchQuery}"` : categories.find((c) => c.id === selectedCategory)?.name}
+                  </span>
+                  <span className="text-[11px] text-amber-700">({filteredProducts.length} items)</span>
+                </div>
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedCategory('all');
                   }}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                  className="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 font-bold rounded-lg text-[11px] border border-amber-300 transition-colors cursor-pointer shrink-0 ml-2"
                 >
                   Clear Filters
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Empty State */}
             {filteredProducts.length === 0 ? (
@@ -228,87 +219,20 @@ export default function StorefrontPage() {
                     setSearchQuery('');
                     setSelectedCategory('all');
                   }}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-2xs transition-all cursor-pointer inline-block"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-2xs transition-all cursor-pointer inline-block"
                 >
                   Show All Fireworks
                 </button>
               </div>
-            ) : searchQuery || selectedCategory !== 'all' ? (
-              /* Flat View when searching or filtering a single category */
-              viewMode === 'grid' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
-                  {filteredProducts.map((product) => (
-                    <QuickAddCard
-                      key={product.id}
-                      product={product}
-                      onQuickView={(p) => setQuickViewProduct(p)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {filteredProducts.map((product) => (
-                    <QuickAddListItem
-                      key={product.id}
-                      product={product}
-                      onQuickView={(p) => setQuickViewProduct(p)}
-                    />
-                  ))}
-                </div>
-              )
             ) : (
-              /* CATEGORIZED SECTION GROUPS (when browsing All Categories) */
-              <div className="space-y-8">
-                {groupedProducts.map((group) => {
-                  const emoji = getCategoryEmoji(group.category.name);
-
-                  return (
-                    <div key={group.category.id} className="space-y-3">
-                      {/* CATEGORY SECTION HEADER */}
-                      <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200/90 shadow-2xs border-l-4 border-l-amber-500">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{emoji}</span>
-                          <div>
-                            <h2 className="font-black text-slate-950 text-sm sm:text-base font-heading tracking-tight">
-                              {group.category.name}
-                            </h2>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                              Sivakasi Selection
-                            </span>
-                          </div>
-                        </div>
-
-                        <span className="bg-amber-100 text-amber-900 font-black text-xs px-2.5 py-1 rounded-full border border-amber-200">
-                          {group.items.length} {group.items.length === 1 ? 'Item' : 'Items'}
-                        </span>
-                      </div>
-
-                      {/* ITEMS IN THIS CATEGORY */}
-                      {viewMode === 'grid' ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
-                          {group.items.map((product) => (
-                            <QuickAddCard
-                              key={product.id}
-                              product={product}
-                              onQuickView={(p) => setQuickViewProduct(p)}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          {group.items.map((product) => (
-                            <QuickAddListItem
-                              key={product.id}
-                              product={product}
-                              onQuickView={(p) => setQuickViewProduct(p)}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              /* PRICE LIST TABLE RATE CARD */
+              <PriceListTable
+                products={products}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                searchQuery={searchQuery}
+                onQuickView={(p) => setQuickViewProduct(p)}
+              />
             )}
           </section>
 
@@ -379,6 +303,39 @@ export default function StorefrontPage() {
           )}
         </main>
       </div>
+
+      {/* Sticky Bottom Order Summary Floating Bar */}
+      {itemCount > 0 && (
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 bg-slate-950 text-white p-3.5 sm:p-4 rounded-3xl shadow-2xl border border-amber-500/40 animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-xs font-black text-amber-400">
+                <ShoppingBag className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{itemCount} {itemCount === 1 ? 'Item' : 'Items'} Selected</span>
+              </div>
+              <div className="text-base sm:text-lg font-black text-white font-mono leading-tight">
+                Total: ₹{subtotal.toLocaleString()}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                View Cart
+              </button>
+              <Link
+                href="/checkout"
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-98 flex items-center gap-1"
+              >
+                <span>Checkout</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />

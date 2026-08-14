@@ -22,10 +22,10 @@ export const Footer: React.FC = () => {
           <span className="font-bold text-slate-800">WhatsApp Copy Share</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <a href="tel:+919952108746" className="flex items-center gap-2 hover:text-amber-600 transition-colors">
           <Phone className="w-4 h-4 text-amber-600 shrink-0" />
-          <span className="font-bold text-slate-800">Sivakasi Direct Hub</span>
-        </div>
+          <span className="font-bold text-slate-800">+91 99521 08746</span>
+        </a>
       </div>
 
       {/* Main Footer Links */}

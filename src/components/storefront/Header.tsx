@@ -10,15 +10,13 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
-  LayoutGrid,
-  List,
   Menu,
   X,
   Home,
-  Zap,
-  RotateCcw,
   Package,
   ChevronRight,
+  Phone,
+  MessageSquare,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Category, DeliveryZone } from '@/types';
@@ -28,8 +26,6 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
   onOpenCart: () => void;
   categories?: Category[];
   zones?: DeliveryZone[];
@@ -40,8 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   selectedCategory,
   onSelectCategory,
-  viewMode,
-  onViewModeChange,
   onOpenCart,
   categories = [],
   zones = [],
@@ -83,21 +77,17 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Main Responsive Brand & Cart Header */}
-        <div className="px-3 sm:px-4 py-2 max-w-7xl mx-auto flex items-center justify-between gap-2">
-          {/* Brand Logo */}
+        {/* Main Responsive Brand Header */}
+        <div className="px-3 sm:px-4 py-2.5 max-w-7xl mx-auto flex items-center justify-between gap-2">
+          {/* Two-Tone Brand Title with Sivakasi Direct Pill Badge */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-base shadow-xs">
-              🎆
-            </div>
-            <div className="leading-tight">
-              <span className="font-black text-sm sm:text-base tracking-tight text-slate-950 block font-heading">
-                VAILY PYRO
-              </span>
-              <span className="text-[9px] text-amber-600 font-extrabold tracking-wider uppercase block -mt-0.5">
-                Sivakasi Direct
-              </span>
-            </div>
+            <span className="text-base sm:text-lg tracking-tight font-heading">
+              <span className="font-extrabold text-slate-900">VAILY PYRO</span>{' '}
+              <span className="font-black text-amber-600">PARK</span>
+            </span>
+            <span className="bg-amber-100/90 text-amber-900 font-extrabold text-[9px] px-2 py-0.5 rounded-md border border-amber-300/80 uppercase tracking-widest hidden xs:inline-block sm:inline-block">
+              Sivakasi Direct
+            </span>
           </Link>
 
           {/* Right Cart & Region & Mobile Menu Button */}
@@ -141,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Cart CTA */}
             <button
               onClick={onOpenCart}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-black text-xs transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                 isMinOrderReached
                   ? 'bg-amber-500 text-slate-950 shadow-xs hover:bg-amber-400'
                   : 'bg-slate-100 text-slate-800 border border-slate-200'
@@ -150,12 +140,12 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="relative">
                 <ShoppingBag className="w-4 h-4 text-slate-950" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                     {itemCount}
                   </span>
                 )}
               </div>
-              <span className="text-xs font-black font-mono">₹{subtotal.toLocaleString()}</span>
+              <span className="text-xs font-bold font-mono">₹{subtotal.toLocaleString()}</span>
             </button>
 
             {/* Mobile Menu Button */}
@@ -169,14 +159,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* SINGLE ROW TOOLBAR: Animated Expanding Search + Category Filter Dropdown + View Switcher */}
+        {/* SINGLE ROW TOOLBAR: Animated Expanding Search + Category Filter Dropdown */}
         <div className="px-3 sm:px-4 py-1.5 max-w-7xl mx-auto flex items-center justify-between gap-2 border-t border-slate-100 relative">
           {/* Animated Expanding Search Input Box */}
           <div
-            className={`relative transition-all duration-300 ease-out min-w-0 ${
-              isSearchFocused
-                ? 'flex-1 z-20 shadow-xs'
-                : 'flex-1 z-10'
+            className={`relative transition-all duration-300 ease-out flex-1 min-w-0 ${
+              isSearchFocused ? 'z-20 shadow-xs' : 'z-10'
             }`}
           >
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -196,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
             {searchQuery && (
               <button
                 onClick={() => onSearchChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 hover:text-slate-800 font-black bg-slate-200/60 hover:bg-slate-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 hover:text-slate-800 font-bold bg-slate-200/60 hover:bg-slate-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors"
               >
                 ✕
               </button>
@@ -204,18 +192,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Category Dropdown Filter */}
-          <div className={`relative shrink-0 transition-all duration-200 ${isSearchFocused ? 'hidden xs:block sm:block' : 'block'}`}>
+          <div className="relative shrink-0">
             <button
               onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-              className={`flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+              className={`flex items-center justify-between gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
                 selectedCategory !== 'all'
                   ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
                   : 'bg-slate-100 hover:bg-slate-200/80 text-slate-800 border-slate-200/80'
               }`}
             >
-              <div className="flex items-center gap-1 truncate">
+              <div className="flex items-center gap-1.5 truncate">
                 <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-slate-600" />
-                <span className="truncate max-w-[75px] sm:max-w-[130px]">
+                <span className="truncate max-w-[85px] sm:max-w-[140px]">
                   {selectedCategory === 'all'
                     ? 'Category'
                     : categories.find((c: Category) => c.id === selectedCategory)?.name || 'Category'}
@@ -237,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
                 />
 
                 <div className="absolute right-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                  <div className="text-[10px] font-extrabold text-slate-400 px-2.5 py-1.5 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 mb-1">
+                  <div className="text-[10px] font-bold text-slate-400 px-2.5 py-1.5 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 mb-1">
                     <span>Select Category</span>
                     <span className="text-[9px] text-amber-600 font-bold">{categories.length} Total</span>
                   </div>
@@ -249,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
                       selectedCategory === 'all'
-                        ? 'bg-amber-500 text-slate-950 font-black shadow-2xs'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-2xs'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -267,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-amber-500 text-slate-950 font-black shadow-2xs'
+                            ? 'bg-amber-500 text-slate-950 font-bold shadow-2xs'
                             : 'text-slate-700 hover:bg-slate-100'
                         }`}
                       >
@@ -279,38 +267,10 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
           </div>
-
-          {/* Grid vs List View Switcher */}
-          <div className={`flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0 shadow-2xs transition-all duration-200 ${isSearchFocused ? 'hidden xs:flex sm:flex' : 'flex'}`}>
-            <button
-              onClick={() => onViewModeChange('grid')}
-              className={`p-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-              title="Grid View"
-              aria-label="Grid View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => onViewModeChange('list')}
-              className={`p-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer ${
-                viewMode === 'list'
-                  ? 'bg-white text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-              title="List View"
-              aria-label="List View"
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
         </div>
       </header>
 
-      {/* PORTAL-RENDERED MOBILE NAVIGATION DRAWER (Unconstrained by Header Stacking Context) */}
+      {/* PORTAL-RENDERED MOBILE NAVIGATION DRAWER */}
       {isMobileMenuOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[9998] flex justify-end font-sans">
           {/* Full Screen Dark Backdrop Overlay */}
@@ -324,14 +284,10 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Drawer Header */}
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shadow-xs">
-                    🎆
-                  </div>
-                  <span className="font-black text-slate-950 text-sm font-heading">
-                    VAILY PYRO PARK
-                  </span>
-                </div>
+                <span className="text-base tracking-tight font-heading">
+                  <span className="font-extrabold text-slate-900">VAILY PYRO</span>{' '}
+                  <span className="font-black text-amber-600">PARK</span>
+                </span>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
@@ -355,30 +311,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </Link>
 
                 <Link
-                  href="/quick-shop"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-amber-500/10 text-slate-900 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Zap className="w-4 h-4 text-amber-600" />
-                    <span>Quick Shop Mode</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </Link>
-
-                <Link
-                  href="/buy-again"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-amber-500/10 text-slate-900 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <RotateCcw className="w-4 h-4 text-amber-600" />
-                    <span>Buy Again</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </Link>
-
-                <Link
                   href="/track-order"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-amber-500/10 text-slate-900 transition-colors"
@@ -391,37 +323,47 @@ export const Header: React.FC<HeaderProps> = ({
                 </Link>
               </div>
 
-              {/* Delivery Zone Selector inside Mobile Menu */}
+              {/* Shop Contact & Enquiry Info Section */}
               <div className="pt-2">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">
-                  Select Delivery Area:
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
+                  Shop Contact &amp; Support:
                 </span>
-                <div className="space-y-1 bg-slate-50 p-2 rounded-2xl border border-slate-200/80">
-                  {uniqueZones.map((zone) => (
-                    <button
-                      key={zone.id}
-                      onClick={() => {
-                        setSelectedZone(zone);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                        selectedZone.id === zone.id || selectedZone.zone_name === zone.zone_name
-                          ? 'bg-amber-500 text-slate-950 font-black shadow-2xs'
-                          : 'text-slate-700 hover:bg-slate-100 font-bold'
-                      }`}
-                    >
-                      <span className="truncate pr-2">{zone.zone_name}</span>
-                      <span className="text-[10px] font-mono shrink-0">Min ₹{zone.min_order_amount.toLocaleString()}</span>
-                    </button>
-                  ))}
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-2.5">
+                  <a
+                    href="tel:+919952108746"
+                    className="flex items-center gap-2.5 p-2.5 bg-white hover:bg-amber-50 text-slate-800 hover:text-amber-900 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
+                      <Phone className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-normal">Call Us Directly</span>
+                      <span className="font-mono text-xs">+91 99521 08746</span>
+                    </div>
+                  </a>
+
+                  <a
+                    href="https://wa.me/919952108746?text=Hi%20Vaily%20Pyro%20Park,%20I%20have%20an%20enquiry%20regarding%20fireworks."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-emerald-700 block font-normal">WhatsApp Enquiry</span>
+                      <span className="text-xs">Chat on WhatsApp</span>
+                    </div>
+                  </a>
                 </div>
               </div>
             </div>
 
             {/* Footer Contact Info */}
-            <div className="border-t border-slate-100 pt-3 text-[11px] text-slate-500 space-y-1 mt-6">
+            <div className="border-t border-slate-100 pt-3 text-[11px] text-slate-500 space-y-1 mt-4">
               <span className="font-bold text-slate-800 block">Vaily Pyro Park</span>
-              <span>Sivakasi Direct Fireworks • Tamil Nadu</span>
+              <span>Direct Factory Outlet • Sivakasi, Tamil Nadu</span>
             </div>
           </div>
         </div>,

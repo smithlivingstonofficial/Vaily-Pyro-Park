@@ -9,7 +9,7 @@ export class WhatsAppService {
    * 2. ₹0 API Fees: Uses official WhatsApp deep-link scheme (`wa.me`). Requires NO paid WhatsApp Business Cloud API, NO Twilio subscription, and NO monthly gateways.
    * 3. Instant Conversion: Clicking opens native WhatsApp app (iOS/Android/Desktop) with pre-filled itemized order proof ready to send to shop owner.
    */
-  static generateOrderWhatsAppLink(order: Order, storePhoneNumber: string = '919840000000'): string {
+  static generateOrderWhatsAppLink(order: Order, storePhoneNumber: string = '919952108746'): string {
     const itemsList = order.items
       ? order.items.map((i) => `• ${i.quantity}x ${i.product_name} - ₹${i.total_price.toLocaleString()}`).join('\n')
       : '';

@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import { CheckCircle2, MessageSquare, Package, ArrowRight, Truck, MapPin, Calendar, Clock, ShoppingBag } from 'lucide-react';
 import { OrderService } from '@/lib/services/order.service';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
+import { OrderTimeline } from '@/components/common/OrderTimeline';
 import { Order, OrderStatus } from '@/types';
 
 export default function OrderConfirmationPage() {
@@ -119,38 +120,15 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Status Tracker */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <h3 className="font-extrabold text-sm text-slate-900 mb-4 flex items-center gap-2">
-            <Package className="w-4 h-4 text-amber-600" /> Live Order Tracking
-          </h3>
-
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {statusSteps.map((step, idx) => {
-              const isPassed = idx <= currentStepIndex;
-              const isCurrent = idx === currentStepIndex;
-
-              return (
-                <div key={step.status} className="flex flex-col items-center text-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs mb-1.5 transition-all ${
-                      isCurrent
-                        ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-200'
-                        : isPassed
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {isPassed ? '✓' : idx + 1}
-                  </div>
-                  <span className={`text-[10px] font-bold ${isPassed ? 'text-slate-900' : 'text-slate-400'}`}>
-                    {step.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Timeline Status Tracker */}
+        <OrderTimeline
+          status={order.status}
+          adminNotes={order.admin_notes}
+          courierPartner={order.courier_partner}
+          trackingNumber={order.tracking_number}
+          createdAt={order.created_at}
+          updatedAt={order.updated_at}
+        />
 
         {/* Order Details & Summary Card */}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">

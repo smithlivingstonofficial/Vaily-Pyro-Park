@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, Package, ArrowLeft, CheckCircle2, MessageSquare, AlertCircle } from 'lucide-react';
 import { OrderService } from '@/lib/services/order.service';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
+import { OrderTimeline } from '@/components/common/OrderTimeline';
 import { Order } from '@/types';
 
 export default function TrackOrderPage() {
@@ -86,47 +87,58 @@ export default function TrackOrderPage() {
           )}
 
           {searchedOrder && (
-            <div className="border border-amber-200 bg-amber-50/50 rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-amber-200/60 pb-3">
-                <div>
-                  <span className="font-black text-slate-950 text-base block">{searchedOrder.order_number}</span>
-                  <span className="text-xs text-slate-500">Customer: {searchedOrder.customer_name}</span>
-                </div>
-                <span className="bg-amber-500 text-slate-950 font-black text-xs px-3 py-1 rounded-full uppercase">
-                  {searchedOrder.status}
-                </span>
-              </div>
+            <div className="space-y-4">
+              <OrderTimeline
+                status={searchedOrder.status}
+                adminNotes={searchedOrder.admin_notes}
+                courierPartner={searchedOrder.courier_partner}
+                trackingNumber={searchedOrder.tracking_number}
+                createdAt={searchedOrder.created_at}
+                updatedAt={searchedOrder.updated_at}
+              />
 
-              <div className="space-y-1.5 text-xs text-slate-700">
-                <div className="flex justify-between">
-                  <span>Shipping Address:</span>
-                  <span className="font-bold text-slate-900">{searchedOrder.city}, {searchedOrder.state}</span>
+              <div className="border border-amber-200 bg-amber-50/50 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-200/60 pb-3">
+                  <div>
+                    <span className="font-black text-slate-950 text-base block">{searchedOrder.order_number}</span>
+                    <span className="text-xs text-slate-500">Customer: {searchedOrder.customer_name}</span>
+                  </div>
+                  <span className="bg-amber-500 text-slate-950 font-black text-xs px-3 py-1 rounded-full uppercase">
+                    {searchedOrder.status}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Amount:</span>
-                  <span className="font-black text-amber-700">₹{searchedOrder.grand_total.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Order Date:</span>
-                  <span>{new Date(searchedOrder.created_at).toLocaleDateString()}</span>
-                </div>
-              </div>
 
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <Link
-                  href={`/order-confirmation/${searchedOrder.id}`}
-                  className="flex-1 py-2.5 bg-slate-950 text-white font-bold text-xs rounded-xl text-center"
-                >
-                  View Full Tracking Page
-                </Link>
-                <a
-                  href={WhatsAppService.generateOrderWhatsAppLink(searchedOrder)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
-                >
-                  <MessageSquare className="w-4 h-4 fill-slate-950" /> WhatsApp Copy
-                </a>
+                <div className="space-y-1.5 text-xs text-slate-700">
+                  <div className="flex justify-between">
+                    <span>Shipping Address:</span>
+                    <span className="font-bold text-slate-900">{searchedOrder.city}, {searchedOrder.state}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-black text-amber-700">₹{searchedOrder.grand_total.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Order Date:</span>
+                    <span>{new Date(searchedOrder.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                  <Link
+                    href={`/order-confirmation/${searchedOrder.id}`}
+                    className="flex-1 py-2.5 bg-slate-950 text-white font-bold text-xs rounded-xl text-center"
+                  >
+                    View Full Tracking Page
+                  </Link>
+                  <a
+                    href={WhatsAppService.generateOrderWhatsAppLink(searchedOrder)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    <MessageSquare className="w-4 h-4 fill-slate-950" /> WhatsApp Copy
+                  </a>
+                </div>
               </div>
             </div>
           )}

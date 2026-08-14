@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
+import { OrderTimeline } from '@/components/common/OrderTimeline';
 
 interface OrderDetailsDrawerProps {
   order: Order | null;
@@ -208,64 +209,25 @@ export function OrderDetailsDrawer({
           </div>
         </div>
 
-        {/* STEPPER PROGRESS STAGE BAR - MOBILE FRIENDLY SCROLL */}
-        <div className="bg-slate-50/80 border-b border-slate-200/80 p-2.5 sm:p-4 shrink-0 shadow-2xs overflow-x-auto scrollbar-none">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-1 min-w-max px-2">
-            {stepperStages.map((stage, idx) => {
-              const currentIdx = getStageIndex(order.status);
-              const isCompleted = idx <= currentIdx;
-              const isCurrent = idx === currentIdx;
-
-              return (
-                <React.Fragment key={stage.status}>
-                  <button
-                    onClick={() =>
-                      onRequestStatusChange(
-                        order.id,
-                        order.order_number,
-                        order.status,
-                        stage.status
-                      )
-                    }
-                    className={`flex flex-col items-center gap-1 transition-all cursor-pointer group ${
-                      isCurrent ? 'scale-105' : ''
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-xs font-black transition-all shadow-2xs ${
-                        isCurrent
-                          ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20 shadow-md font-black'
-                          : isCompleted
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-white border border-slate-200 text-slate-400 group-hover:bg-slate-100'
-                      }`}
-                    >
-                      {isCompleted && !isCurrent ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : stage.icon}
-                    </div>
-                    <span
-                      className={`text-[9px] sm:text-xs font-extrabold ${
-                        isCurrent
-                          ? 'text-amber-900 font-black'
-                          : isCompleted
-                          ? 'text-slate-900'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {stage.label}
-                    </span>
-                  </button>
-
-                  {idx < stepperStages.length - 1 && (
-                    <div
-                      className={`h-0.5 flex-1 min-w-[20px] max-w-[50px] mx-1 rounded-full transition-colors ${
-                        idx < currentIdx ? 'bg-emerald-500' : 'bg-slate-200'
-                      }`}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
+        {/* INTERACTIVE TIMELINE STEPPER PROGRESS BAR */}
+        <div className="bg-slate-50/80 border-b border-slate-200/80 p-3 sm:p-4 shrink-0 overflow-y-auto max-h-60 shadow-2xs">
+          <OrderTimeline
+            status={order.status}
+            adminNotes={order.admin_notes}
+            courierPartner={order.courier_partner}
+            trackingNumber={order.tracking_number}
+            createdAt={order.created_at}
+            updatedAt={order.updated_at}
+            interactive={true}
+            onUpdateStatus={(newStatus) =>
+              onRequestStatusChange(
+                order.id,
+                order.order_number,
+                order.status,
+                newStatus
+              )
+            }
+          />
         </div>
 
         {/* LIGHT THEME TAB SELECTION BAR */}
