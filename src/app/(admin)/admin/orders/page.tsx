@@ -25,10 +25,9 @@ import {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeStatusTab, setActiveStatusTab] = useState<string>('ALL');
-  const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<Order | null>(null);
@@ -37,6 +36,17 @@ export default function AdminOrdersPage() {
 
   // Real-time Toast Messages state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Automatically detect mobile viewport and switch to Card view on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 768) {
+        setViewMode('cards');
+      } else {
+        setViewMode('table');
+      }
+    }
+  }, []);
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -66,10 +76,6 @@ export default function AdminOrdersPage() {
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const matchesTab = activeStatusTab === 'ALL' || order.status === activeStatusTab;
-      const matchesPayment =
-        paymentFilter === 'ALL' ||
-        (paymentFilter === 'PAID' && order.is_paid) ||
-        (paymentFilter === 'UNPAID' && !order.is_paid);
 
       const matchesSearch =
         !searchQuery ||
@@ -94,9 +100,9 @@ export default function AdminOrdersPage() {
         }
       }
 
-      return matchesTab && matchesPayment && matchesSearch && matchesDate;
+      return matchesTab && matchesSearch && matchesDate;
     });
-  }, [orders, activeStatusTab, paymentFilter, dateFilter, searchQuery]);
+  }, [orders, activeStatusTab, dateFilter, searchQuery]);
 
   // Request Status Change Modal
   const requestStatusChange = (
@@ -257,40 +263,13 @@ export default function AdminOrdersPage() {
 
   const handleResetFilters = () => {
     setActiveStatusTab('ALL');
-    setPaymentFilter('ALL');
     setDateFilter('ALL');
     setSearchQuery('');
     addToast('Order filters reset to default', 'info');
   };
 
   return (
-    <div className="space-y-5">
-      {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-              Order Fulfillment Hub
-            </h1>
-            <span className="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-              Enterprise SaaS
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Manage Sivakasi warehouse dispatch, carrier tracking, invoice printing, and payment settlement ledger.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          <button
-            onClick={handleExportCSV}
-            className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span>Export CSV</span>
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-3.5 sm:space-y-5">
       {/* Operations Executive KPI Metric Strip */}
       <OrderMetrics orders={orders} />
 
@@ -300,8 +279,6 @@ export default function AdminOrdersPage() {
         filteredOrders={filteredOrders}
         activeStatusTab={activeStatusTab}
         setActiveStatusTab={setActiveStatusTab}
-        paymentFilter={paymentFilter}
-        setPaymentFilter={setPaymentFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
         searchQuery={searchQuery}
@@ -311,6 +288,7 @@ export default function AdminOrdersPage() {
         selectedOrderIds={selectedOrderIds}
         onSelectAll={handleSelectAll}
         onResetFilters={handleResetFilters}
+        onExportCSV={handleExportCSV}
       />
 
       {/* Main Orders Display Area */}

@@ -4,14 +4,12 @@ import React from 'react';
 import {
   CheckSquare,
   Square,
-  User,
-  Phone,
   MapPin,
   Truck,
   MessageSquare,
   Printer,
+  PhoneCall,
   ChevronRight,
-  Package,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
@@ -28,7 +26,7 @@ interface OrdersCardViewProps {
     currentStatus: OrderStatus,
     newStatus: OrderStatus
   ) => void;
-  onTogglePaymentSettlement: (orderId: string) => void;
+  onTogglePaymentSettlement?: (orderId: string) => void;
 }
 
 export function OrdersCardView({
@@ -38,25 +36,52 @@ export function OrdersCardView({
   onSelectOrder,
   onPrintSlip,
   onRequestStatusChange,
-  onTogglePaymentSettlement,
 }: OrdersCardViewProps) {
   const getStatusBadgeStyle = (status: OrderStatus) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-amber-500/10 text-amber-800 border-amber-500/30';
+        return {
+          bg: 'bg-amber-500/10 text-amber-800 border-amber-500/30',
+          dot: 'bg-amber-500 animate-pulse',
+          line: 'bg-amber-500',
+        };
       case 'CONFIRMED':
-        return 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30';
+        return {
+          bg: 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30',
+          dot: 'bg-emerald-500',
+          line: 'bg-emerald-500',
+        };
       case 'PACKING':
       case 'PACKED':
-        return 'bg-amber-600/10 text-amber-900 border-amber-600/30';
+        return {
+          bg: 'bg-amber-600/10 text-amber-900 border-amber-600/30',
+          dot: 'bg-amber-600 animate-pulse',
+          line: 'bg-amber-600',
+        };
       case 'DISPATCHED':
-        return 'bg-blue-500/10 text-blue-800 border-blue-500/30';
+        return {
+          bg: 'bg-blue-500/10 text-blue-800 border-blue-500/30',
+          dot: 'bg-blue-500',
+          line: 'bg-blue-500',
+        };
       case 'DELIVERED':
-        return 'bg-emerald-600 text-white border-emerald-600';
+        return {
+          bg: 'bg-emerald-600 text-white border-emerald-600',
+          dot: 'bg-white',
+          line: 'bg-emerald-600',
+        };
       case 'CANCELLED':
-        return 'bg-red-500/10 text-red-800 border-red-500/30';
+        return {
+          bg: 'bg-red-500/10 text-red-800 border-red-500/30',
+          dot: 'bg-red-500',
+          line: 'bg-red-500',
+        };
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return {
+          bg: 'bg-slate-100 text-slate-800 border-slate-200',
+          dot: 'bg-slate-400',
+          line: 'bg-slate-300',
+        };
     }
   };
 
@@ -76,28 +101,84 @@ export function OrdersCardView({
     }
   };
 
+  const getNextStatusButtonConfig = (next: OrderStatus) => {
+    switch (next) {
+      case 'CONFIRMED':
+        return {
+          label: '✓ Confirm Order',
+          style:
+            'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/20',
+        };
+      case 'PACKING':
+        return {
+          label: '📦 Start Packing',
+          style:
+            'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/20',
+        };
+      case 'DISPATCHED':
+        return {
+          label: '🚚 Dispatch Order',
+          style:
+            'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-blue-500/20',
+        };
+      case 'DELIVERED':
+        return {
+          label: '🎉 Mark Delivered',
+          style:
+            'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/20',
+        };
+      default:
+        return {
+          label: 'Advance Status',
+          style: 'bg-amber-500 text-slate-950',
+        };
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
       {orders.map((order) => {
         const isSelected = selectedOrderIds.includes(order.id);
         const nextStatus = getNextStatus(order.status);
+        const statusConfig = getStatusBadgeStyle(order.status);
+        const nextBtnConfig = nextStatus ? getNextStatusButtonConfig(nextStatus) : null;
+        const totalUnitsCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+        const topItems = order.items?.slice(0, 2) || [];
+        const extraItemsCount = (order.items?.length || 0) - topItems.length;
 
         return (
           <div
             key={order.id}
-            className={`bg-white rounded-3xl border transition-all p-4.5 flex flex-col justify-between space-y-3.5 relative overflow-hidden group ${
+            onClick={() => onSelectOrder(order)}
+            className={`bg-white rounded-3xl border transition-all duration-200 p-3.5 sm:p-4.5 flex flex-col justify-between space-y-3 relative overflow-hidden group cursor-pointer ${
               isSelected
                 ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
                 : 'border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300'
             }`}
           >
-            <div>
-              {/* Card Top Header */}
-              <div className="flex items-center justify-between mb-2.5 pb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
+            {/* Status Top Accent Line */}
+            <div className={`h-1.5 w-full absolute top-0 left-0 ${statusConfig.line}`} />
+
+            <div className="space-y-3">
+              {/* Card Top Header Row */}
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 pt-0.5">
+                <div className="flex items-center gap-2 min-w-0">
                   <button
-                    onClick={() => onToggleSelection(order.id)}
-                    className="text-slate-400 hover:text-amber-600 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleSelection(order.id);
+                    }}
+                    className="text-slate-400 hover:text-amber-600 cursor-pointer p-0.5 shrink-0"
+                    aria-label="Select order"
                   >
                     {isSelected ? (
                       <CheckSquare className="w-4 h-4 text-amber-600" />
@@ -106,141 +187,182 @@ export function OrdersCardView({
                     )}
                   </button>
                   <button
-                    onClick={() => onSelectOrder(order)}
-                    className="font-black text-slate-950 text-base tracking-tight hover:text-amber-600 transition-colors cursor-pointer flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectOrder(order);
+                    }}
+                    className="font-black text-slate-950 text-base tracking-tight hover:text-amber-600 transition-colors cursor-pointer truncate"
                   >
                     <span>{order.order_number}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => onTogglePaymentSettlement(order.id)}
-                    className={`text-[9px] font-black px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
-                      order.is_paid
-                        ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
-                        : 'bg-amber-500/10 text-amber-800 border-amber-500/30'
-                    }`}
-                    title="Click to toggle payment settlement status"
-                  >
-                    {order.is_paid ? 'PAID ✓' : 'UNPAID COD'}
-                  </button>
-
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span
-                    className={`font-black text-[10px] px-2.5 py-0.5 rounded-full border uppercase ${getStatusBadgeStyle(
-                      order.status
-                    )}`}
+                    className={`inline-flex items-center gap-1.5 font-black text-[10px] px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${statusConfig.bg}`}
                   >
-                    {order.status}
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
+                    <span>{order.status}</span>
                   </span>
                 </div>
               </div>
 
-              {/* Customer Info */}
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <User className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="truncate">{order.customer_name}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-slate-500 text-[11px]">
-                  <div className="flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{order.customer_mobile}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-slate-600 font-semibold truncate max-w-[130px]">
-                    <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span className="truncate">{order.city}, {order.state}</span>
-                  </div>
-                </div>
-
-                {/* Items preview snippet */}
-                {order.items && order.items.length > 0 && (
-                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-[11px] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 font-bold uppercase text-[9px] tracking-wider">
-                      <span>Items Breakdown</span>
-                      <span>{order.items.length} Products</span>
+              {/* Customer Profile & Address Card */}
+              <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 font-black text-xs flex items-center justify-center border border-amber-500/20 shrink-0 shadow-2xs">
+                      {getInitials(order.customer_name)}
                     </div>
-                    <div className="text-slate-700 font-medium truncate">
-                      {order.items.map((i) => `${i.quantity}x ${i.product_name}`).join(', ')}
+                    <div className="min-w-0">
+                      <span className="font-extrabold text-slate-950 text-xs sm:text-sm block truncate leading-tight">
+                        {order.customer_name}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-mono block leading-tight">
+                        {order.customer_mobile}
+                      </span>
                     </div>
                   </div>
-                )}
 
-                {/* Logistics Badge */}
-                {order.courier_partner && (
-                  <div className="flex items-center justify-between text-[10px] bg-blue-50/70 p-2 rounded-xl border border-blue-200/60">
-                    <span className="font-bold text-blue-900 flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-blue-600" />
-                      {order.courier_partner}
-                    </span>
-                    <span className="font-mono font-extrabold text-blue-700">
-                      #{order.tracking_number || 'Pending'}
-                    </span>
-                  </div>
-                )}
+                  <span className="text-[10px] text-slate-400 font-extrabold shrink-0">
+                    {new Date(order.created_at).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 min-w-0 text-slate-700 text-[11px] font-extrabold">
+                  <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="truncate">
+                    {order.city}, {order.state}
+                  </span>
+                </div>
+
+                {/* 1-Tap Ergonomic Full-Width Call & WhatsApp Action Pills */}
+                <div className="flex items-center gap-2 pt-1 border-t border-slate-200/60">
+                  <a
+                    href={`tel:${order.customer_mobile}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 py-2 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-200/90 transition-colors shadow-2xs cursor-pointer"
+                    title="Call Customer"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5 text-slate-700" />
+                    <span>Call</span>
+                  </a>
+
+                  <a
+                    href={WhatsAppService.generateOrderWhatsAppLink(order)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    title="Send WhatsApp Update"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
+
+              {/* Information-Dense Products Preview Breakdown */}
+              {order.items && order.items.length > 0 && (
+                <div className="bg-slate-50/80 p-2.5 rounded-2xl border border-slate-100 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    <span>Items ({totalUnitsCount} Units)</span>
+                    <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/80 font-black">
+                      Sivakasi Pack
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    {topItems.map((item) => (
+                      <div
+                        key={item.product_id}
+                        className="flex items-center justify-between gap-2 text-slate-800"
+                      >
+                        <div className="flex items-center gap-1.5 truncate min-w-0">
+                          <span className="bg-amber-100 text-amber-900 font-black text-[10px] px-1.5 py-0.2 rounded-md shrink-0">
+                            {item.quantity}x
+                          </span>
+                          <span className="font-medium text-slate-700 truncate text-[11px]">
+                            {item.product_name}
+                          </span>
+                        </div>
+                        <span className="font-extrabold text-slate-900 font-mono text-[11px] shrink-0">
+                          ₹{item.total_price.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+
+                    {extraItemsCount > 0 && (
+                      <div className="flex items-center justify-between pt-0.5 text-[10px] text-amber-700 font-black">
+                        <span>+ {extraItemsCount} more products...</span>
+                        <ChevronRight className="w-3 h-3 text-amber-600" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Courier Partner & LR Tracking Badge */}
+              {order.courier_partner && (
+                <div className="flex items-center justify-between text-xs bg-blue-50/80 p-2 rounded-xl border border-blue-200/60">
+                  <span className="font-bold text-blue-900 flex items-center gap-1.5 text-[11px]">
+                    <Truck className="w-3.5 h-3.5 text-blue-600" />
+                    {order.courier_partner}
+                  </span>
+                  <span className="font-mono font-black text-blue-700 text-[11px]">
+                    #{order.tracking_number || 'Pending'}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Card Footer */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Grand Total
-                </span>
-                <span className="text-base font-black text-slate-950">
-                  ₹{order.grand_total.toLocaleString()}
-                </span>
-              </div>
+            {/* Ergonomic Card Footer Actions Row */}
+            <div className="pt-2.5 border-t border-slate-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                    Grand Total
+                  </span>
+                  <span className="text-lg font-black text-slate-950 font-mono leading-tight block">
+                    ₹{order.grand_total.toLocaleString()}
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <a
-                  href={WhatsAppService.generateOrderWhatsAppLink(order)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-2xs"
-                  title="Send WhatsApp Update"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
-                </a>
-
-                <button
-                  onClick={() => onPrintSlip(order)}
-                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border border-slate-200 cursor-pointer"
-                  title="Print Packing Slip / Tax Invoice"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                </button>
-
-                {nextStatus && (
+                <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() =>
-                      onRequestStatusChange(
-                        order.id,
-                        order.order_number,
-                        order.status,
-                        nextStatus
-                      )
-                    }
-                    className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-2xs transition-all cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPrintSlip(order);
+                    }}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all border border-slate-200 cursor-pointer text-xs font-bold flex items-center gap-1.5"
+                    title="Print Packing Slip / Tax Invoice"
                   >
-                    {nextStatus === 'CONFIRMED'
-                      ? 'Confirm'
-                      : nextStatus === 'PACKING'
-                      ? 'Pack'
-                      : nextStatus === 'DISPATCHED'
-                      ? 'Dispatch'
-                      : 'Deliver'}
+                    <Printer className="w-3.5 h-3.5 text-slate-700" />
+                    <span>Print Slip</span>
                   </button>
-                )}
-
-                <button
-                  onClick={() => onSelectOrder(order)}
-                  className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                >
-                  Details
-                </button>
+                </div>
               </div>
+
+              {/* Full-Width Touch Status Advancement Button */}
+              {nextStatus && nextBtnConfig && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRequestStatusChange(
+                      order.id,
+                      order.order_number,
+                      order.status,
+                      nextStatus
+                    );
+                  }}
+                  className={`w-full py-2.5 rounded-2xl font-black text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 ${nextBtnConfig.style}`}
+                >
+                  <span>{nextBtnConfig.label}</span>
+                </button>
+              )}
             </div>
           </div>
         );

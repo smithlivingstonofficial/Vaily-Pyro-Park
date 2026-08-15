@@ -29,7 +29,7 @@ interface OrdersTableViewProps {
     currentStatus: OrderStatus,
     newStatus: OrderStatus
   ) => void;
-  onTogglePaymentSettlement: (orderId: string) => void;
+  onTogglePaymentSettlement?: (orderId: string) => void;
 }
 
 export function OrdersTableView({
@@ -126,7 +126,6 @@ export function OrdersTableView({
               <th className="p-3.5">Order Info</th>
               <th className="p-3.5">Customer & Contact</th>
               <th className="p-3.5">Destination</th>
-              <th className="p-3.5">Payment</th>
               <th className="p-3.5">Total</th>
               <th className="p-3.5">Status</th>
               <th className="p-3.5 text-right pr-5">Quick Actions</th>
@@ -204,21 +203,6 @@ export function OrdersTableView({
                         {order.courier_partner} #{order.tracking_number || 'Pending'}
                       </span>
                     )}
-                  </td>
-
-                  {/* Payment */}
-                  <td className="p-3.5">
-                    <button
-                      onClick={() => onTogglePaymentSettlement(order.id)}
-                      className={`text-[9px] font-black px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
-                        order.is_paid
-                          ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20'
-                          : 'bg-amber-500/10 text-amber-800 border-amber-500/30 hover:bg-amber-500/20'
-                      }`}
-                      title="Click to toggle payment settlement status"
-                    >
-                      {order.is_paid ? 'PAID ✓' : 'UNPAID COD'}
-                    </button>
                   </td>
 
                   {/* Grand Total */}

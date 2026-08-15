@@ -91,7 +91,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/orders', label: 'Orders & Tracking', icon: ShoppingCart },
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/categories', label: 'Categories', icon: SlidersHorizontal },
-    { href: '/admin/inventory', label: 'Stock & Inventory', icon: Warehouse },
   ];
 
   const currentPageLabel = navItems.find((item) => item.href === pathname)?.label || 'Console';
@@ -102,14 +101,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Top Navigation Header */}
       <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center justify-between md:hidden shadow-2xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shadow-2xs">
+          <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow-2xs">
             ⚡
           </div>
           <div>
-            <span className="font-black text-xs text-slate-950 tracking-tight block">
+            <span className="font-bold text-xs text-slate-900 tracking-tight block">
               ADMIN CONSOLE
             </span>
-            <span className="text-[10px] text-amber-600 font-extrabold uppercase tracking-wider block -mt-0.5">
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider block -mt-0.5">
               {currentPageLabel}
             </span>
           </div>
@@ -145,14 +144,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">
                     ⚡
                   </div>
                   <div>
-                    <span className="font-black text-sm text-slate-950 tracking-tight block">
+                    <span className="font-bold text-sm text-slate-900 tracking-tight block">
                       ADMIN CONSOLE
                     </span>
-                    <span className="text-[10px] text-amber-600 font-extrabold uppercase tracking-wider">
+                    <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">
                       Vaily Pyro Park
                     </span>
                   </div>
@@ -233,14 +232,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden md:flex flex-col w-64 bg-white text-slate-900 shrink-0 border-r border-slate-200/90 sticky top-0 h-screen justify-between p-4 shadow-2xs">
         <div>
           <div className="pb-4 border-b border-slate-100 mb-4 flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-base shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-base shadow-2xs">
               ⚡
             </div>
             <div>
-              <span className="font-black text-sm text-slate-950 tracking-tight block">
+              <span className="font-bold text-sm text-slate-900 tracking-tight block">
                 ADMIN CONSOLE
               </span>
-              <span className="text-[10px] text-amber-600 font-extrabold uppercase tracking-wider block -mt-0.5">
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider block -mt-0.5">
                 Vaily Pyro Park
               </span>
             </div>
@@ -248,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <Link
             href="/admin/products"
-            className="w-full mb-3 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-98"
+            className="w-full mb-3 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-98"
           >
             <Plus className="w-4 h-4" /> Quick Add Product
           </Link>
@@ -262,10 +261,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-amber-500 text-slate-950 font-black shadow-xs translate-x-0.5'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-xs translate-x-0.5'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -280,13 +279,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="pt-4 border-t border-slate-100 space-y-2">
-          <div className="px-2.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+          <div className="px-2.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-heading">
             Supabase Auth Session
           </div>
           <div className="px-3 py-2 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs text-emerald-900 font-black flex items-center justify-between">
             <div className="flex items-center gap-1.5 truncate pr-1">
               <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="truncate text-[11px] font-mono">{userEmail}</span>
+              <span className="truncate text-[11px]">{userEmail}</span>
             </div>
             <span className="text-[9px] bg-emerald-200 text-emerald-950 font-black px-1.5 py-0.2 rounded uppercase shrink-0">
               Active

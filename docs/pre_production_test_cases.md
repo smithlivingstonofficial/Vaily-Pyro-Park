@@ -10,9 +10,9 @@
 
 Before beginning test execution, ensure the following SQL migrations have been executed in your **Supabase Dashboard ➔ SQL Editor**:
 
-1. [ ] **Database Schema**: Execute [`supabase/migrations/20260807_initial_schema.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/migrations/20260807_initial_schema.sql).
-2. [ ] **Admin User**: Execute [`supabase/migrations/20260807_create_admin_user.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/migrations/20260807_create_admin_user.sql) for `vel56skc@gmail.com`.
-3. [ ] **Catalog Seed Data**: Execute [`supabase/migrations/20260807_seed_initial_catalog.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/migrations/20260807_seed_initial_catalog.sql).
+1. [ ] **Production Database Schema**: Execute [`supabase/production_setup/01_production_schema.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/01_production_schema.sql).
+2. [ ] **Production Admin User**: Execute [`supabase/production_setup/02_production_admin_user.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/02_production_admin_user.sql) for `vel56skc@gmail.com`.
+3. [ ] **Production Store & Catalog Seed Data**: Execute [`supabase/production_setup/03_production_seed_data.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/03_production_seed_data.sql).
 
 ---
 

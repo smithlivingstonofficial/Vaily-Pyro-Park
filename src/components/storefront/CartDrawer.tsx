@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { ProductService } from '@/lib/services/product.service';
-import { Product } from '@/types';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -13,10 +11,10 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [itemToRemove, setItemToRemove] = useState<{ id: string; name: string; imageUrl?: string } | null>(null);
+
   const {
     cart,
-    addToCart,
     updateQuantity,
     removeFromCart,
     subtotal,
@@ -30,172 +28,182 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     grandTotal,
   } = useCart();
 
-  useEffect(() => {
-    async function loadRecs() {
-      const allProds = await ProductService.getAllProducts();
-      setRecommendations(allProds);
-    }
-    loadRecs();
-  }, []);
-
   if (!isOpen) return null;
 
   const progressPercent = Math.min(100, Math.round((subtotal / minOrderThreshold) * 100));
 
-  const topUpRecommendations = recommendations.filter(
-    (p) => !cart.some((item) => item.product.id === p.id)
-  ).slice(0, 2);
+  // Clean zone name string (removes trailing "(Home Zone)")
+  const cleanZoneName = (selectedZone?.zone_name || 'Home Zone').replace(/\s*\([^)]*\)/g, '');
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-hidden font-sans">
       {/* Backdrop */}
       <div 
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white text-slate-900 shadow-2xl flex flex-col justify-between">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+        <div className="w-screen max-w-md bg-white text-slate-900 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250">
+          
           {/* Header */}
-          <div className="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-amber-600" />
-              <h2 className="font-extrabold text-base text-slate-950">Your Cart ({itemCount})</h2>
+          <div className="px-5 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                <ShoppingBag className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="font-extrabold text-base text-slate-950 leading-tight">Your Shopping Cart</h2>
+                <span className="text-[11px] text-slate-500 font-medium block -mt-0.5">
+                  {itemCount} {itemCount === 1 ? 'item' : 'items'} added
+                </span>
+              </div>
             </div>
+
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-900 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              aria-label="Close cart"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4.5 h-4.5" />
             </button>
           </div>
 
-          {/* Minimum Order Progress Bar */}
-          <div className="bg-amber-50 border-b border-amber-200 px-5 py-3">
-            <div className="flex items-center justify-between text-xs font-bold mb-1">
-              <span className="text-slate-800 flex items-center gap-1">
+          {/* Minimum Order Progress Card */}
+          <div className={`border-b px-5 py-3.5 transition-colors ${
+            isMinOrderReached ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-amber-50/70 border-amber-200/80'
+          }`}>
+            <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+              <span className="text-slate-800 flex items-center gap-1.5">
                 {isMinOrderReached ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 ) : (
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                 )}
-                Min Order ({selectedZone.zone_name}): ₹{minOrderThreshold.toLocaleString()}
+                <span>Min Order ({cleanZoneName}): ₹{minOrderThreshold.toLocaleString()}</span>
               </span>
-              <span className={isMinOrderReached ? 'text-emerald-700 font-black' : 'text-amber-800'}>
-                ₹{subtotal.toLocaleString()} / ₹{minOrderThreshold.toLocaleString()}
+              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
+                isMinOrderReached
+                  ? 'bg-emerald-200/80 text-emerald-950'
+                  : 'bg-amber-200/80 text-amber-950'
+              }`}>
+                {progressPercent}%
               </span>
             </div>
 
             {/* Progress bar line */}
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden my-1.5">
               <div
                 className={`h-full transition-all duration-500 rounded-full ${
-                  isMinOrderReached ? 'bg-emerald-500' : 'bg-amber-500'
+                  isMinOrderReached
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                    : 'bg-gradient-to-r from-amber-500 to-amber-600'
                 }`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
 
-            {!isMinOrderReached && (
-              <p className="text-[11px] text-amber-900 font-bold mt-1 flex items-center justify-between">
-                <span>Add ₹{remainingForMinOrder.toLocaleString()} more to checkout</span>
-                <span>{progressPercent}%</span>
-              </p>
-            )}
+            <div className="flex items-center justify-between text-[11px] font-semibold mt-1">
+              <span className={isMinOrderReached ? 'text-emerald-800' : 'text-amber-900'}>
+                {isMinOrderReached
+                  ? '✓ Minimum order requirement met!'
+                  : `Add ₹${remainingForMinOrder.toLocaleString()} more to checkout`}
+              </span>
+              <span className="text-slate-600 font-bold">
+                ₹{subtotal.toLocaleString()} / ₹{minOrderThreshold.toLocaleString()}
+              </span>
+            </div>
           </div>
 
           {/* Cart Item List */}
           <div className="flex-1 overflow-y-auto px-5 py-3 divide-y divide-slate-100">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6">
-                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-2">
-                  <ShoppingBag className="w-6 h-6" />
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
+                <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl border border-amber-200 flex items-center justify-center">
+                  <ShoppingBag className="w-7 h-7" />
                 </div>
-                <h3 className="font-bold text-slate-800 text-sm">Cart is empty</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Tap + on products to add items.</p>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm">Your Cart is Empty</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                    Browse our fireworks list and tap + to quickly add items.
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer mt-1"
+                >
+                  Start Shopping
+                </button>
               </div>
             ) : (
-              <>
-                {cart.map(({ product, quantity }) => (
-                  <div key={product.id} className="py-2.5 flex items-center justify-between gap-3">
+              cart.map(({ product, quantity }) => (
+                <div key={product.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
                     <img
                       src={product.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80'}
                       alt={product.name}
-                      className="w-12 h-12 object-cover rounded-lg border border-slate-200"
+                      className="w-full h-full object-cover"
                     />
+                  </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-extrabold text-xs text-slate-900 truncate">{product.name}</h4>
-                      <p className="text-[11px] text-slate-500">₹{product.selling_price.toLocaleString()} / unit</p>
-                      <span className="font-black text-xs text-amber-700">
+                  <div className="flex-1 min-w-0 pr-1">
+                    <h4 className="font-bold text-xs text-slate-900 line-clamp-2 leading-snug break-words">
+                      {product.name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-slate-400 font-medium">₹{product.selling_price.toLocaleString()} / unit</span>
+                      <span className="font-extrabold text-xs text-slate-950">
                         ₹{(product.selling_price * quantity).toLocaleString()}
                       </span>
                     </div>
+                  </div>
 
-                    {/* Stepper */}
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
-                        <button
-                          onClick={() => updateQuantity(product.id, quantity - 1)}
-                          className="w-5 h-5 rounded bg-white text-slate-800 font-bold flex items-center justify-center shadow-xs"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-5 text-center font-bold text-xs">{quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(product.id, quantity + 1)}
-                          className="w-5 h-5 rounded bg-amber-500 text-slate-950 font-bold flex items-center justify-center shadow-xs"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-
+                  {/* Stepper & Trash */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
                       <button
-                        onClick={() => removeFromCart(product.id)}
-                        className="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                        type="button"
+                        onClick={() => {
+                          if (quantity === 1) {
+                            setItemToRemove({ id: product.id, name: product.name, imageUrl: product.image_url });
+                          } else {
+                            updateQuantity(product.id, quantity - 1);
+                          }
+                        }}
+                        className="w-6 h-6 rounded-lg bg-white hover:bg-slate-50 text-slate-800 font-bold flex items-center justify-center shadow-2xs transition-colors cursor-pointer active:scale-95 border border-slate-200/60"
+                        aria-label="Decrease"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-6 text-center font-bold text-xs text-slate-900">{quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(product.id, quantity + 1)}
+                        className="w-6 h-6 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center shadow-2xs transition-colors cursor-pointer active:scale-95"
+                        aria-label="Increase"
+                      >
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                  </div>
-                ))}
 
-                {/* Compact Top-up Recommendations */}
-                {!isMinOrderReached && topUpRecommendations.length > 0 && (
-                  <div className="pt-3 mt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1 text-xs font-bold text-amber-800 mb-2">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Recommended Top-ups:</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5">
-                      {topUpRecommendations.map((recProduct) => (
-                        <div
-                          key={recProduct.id}
-                          className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-200 text-xs"
-                        >
-                          <div className="truncate">
-                            <span className="font-bold text-slate-800 block truncate">{recProduct.name}</span>
-                            <span className="text-slate-500">₹{recProduct.selling_price.toLocaleString()}</span>
-                          </div>
-                          <button
-                            onClick={() => addToCart(recProduct, 1)}
-                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg flex items-center gap-1 shadow-xs shrink-0"
-                          >
-                            <Plus className="w-3 h-3" /> Add ₹{recProduct.selling_price}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setItemToRemove({ id: product.id, name: product.name, imageUrl: product.image_url })}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Remove item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-              </>
+                </div>
+              ))
             )}
           </div>
 
           {/* Footer Summary & Checkout Action */}
           {cart.length > 0 && (
-            <div className="p-5 bg-slate-50 border-t border-slate-200">
-              <div className="space-y-1 text-xs text-slate-600 mb-3">
+            <div className="p-5 bg-slate-50/90 border-t border-slate-200/90 space-y-3.5">
+              <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span className="font-bold text-slate-900">₹{subtotal.toLocaleString()}</span>
@@ -207,12 +215,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Delivery ({selectedZone.zone_name}):</span>
+                  <span>Delivery ({cleanZoneName}):</span>
                   <span className="font-bold text-slate-900">
                     {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
                   </span>
                 </div>
-                <div className="flex justify-between text-base font-black text-slate-950 pt-1.5 border-t border-slate-200">
+                <div className="flex justify-between text-base font-extrabold text-slate-950 pt-2 border-t border-slate-200">
                   <span>Grand Total:</span>
                   <span className="text-amber-600">₹{grandTotal.toLocaleString()}</span>
                 </div>
@@ -222,23 +230,63 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                 <Link
                   href="/checkout"
                   onClick={onClose}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl flex items-center justify-center gap-1.5 shadow-md text-xs transition-all active:scale-98"
+                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 text-xs transition-all active:scale-98"
                 >
-                  <span>CHECKOUT</span>
+                  <span>PROCEED TO CHECKOUT</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               ) : (
                 <button
-                  disabled
-                  className="w-full py-3 bg-slate-200 text-slate-400 font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed text-xs"
+                  type="button"
+                  onClick={onClose}
+                  className="w-full py-3 bg-amber-100 hover:bg-amber-200/80 text-amber-950 font-bold rounded-2xl flex items-center justify-center gap-1.5 text-xs border border-amber-300 transition-colors cursor-pointer"
                 >
                   <span>ADD ₹{remainingForMinOrder.toLocaleString()} MORE TO CHECKOUT</span>
                 </button>
               )}
             </div>
           )}
+
         </div>
       </div>
+
+      {/* Custom Remove Confirmation Modal */}
+      {itemToRemove && (
+        <div className="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-xs w-full p-5 text-center space-y-4 border border-slate-200 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-slate-950 text-sm">Remove from Cart?</h3>
+              <p className="text-xs text-slate-500 leading-snug">
+                Are you sure you want to remove <strong className="text-slate-800 font-bold">{itemToRemove.name}</strong> from your cart?
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setItemToRemove(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeFromCart(itemToRemove.id);
+                  setItemToRemove(null);
+                }}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-98 cursor-pointer"
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

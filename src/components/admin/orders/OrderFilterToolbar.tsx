@@ -12,6 +12,7 @@ import {
   Square,
   X,
   Filter,
+  Download,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 
@@ -20,8 +21,6 @@ interface OrderFilterToolbarProps {
   filteredOrders: Order[];
   activeStatusTab: string;
   setActiveStatusTab: (status: string) => void;
-  paymentFilter: string;
-  setPaymentFilter: (payment: string) => void;
   dateFilter: string;
   setDateFilter: (date: string) => void;
   searchQuery: string;
@@ -31,6 +30,7 @@ interface OrderFilterToolbarProps {
   selectedOrderIds: string[];
   onSelectAll: () => void;
   onResetFilters: () => void;
+  onExportCSV?: () => void;
 }
 
 const STATUS_OPTIONS: { key: string; label: string }[] = [
@@ -48,8 +48,6 @@ export function OrderFilterToolbar({
   filteredOrders,
   activeStatusTab,
   setActiveStatusTab,
-  paymentFilter,
-  setPaymentFilter,
   dateFilter,
   setDateFilter,
   searchQuery,
@@ -59,53 +57,27 @@ export function OrderFilterToolbar({
   selectedOrderIds,
   onSelectAll,
   onResetFilters,
+  onExportCSV,
 }: OrderFilterToolbarProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
 
-  const isFiltered = activeStatusTab !== 'ALL' || paymentFilter !== 'ALL' || dateFilter !== 'ALL' || searchQuery !== '';
+  const isFiltered = activeStatusTab !== 'ALL' || dateFilter !== 'ALL' || searchQuery !== '';
 
   const getStatusCount = (status: string) => {
     if (status === 'ALL') return orders.length;
     return orders.filter((o) => o.status === status).length;
   };
 
+  const getStatusLabel = (key: string) => {
+    if (key === 'ALL') return 'Status: All';
+    const found = STATUS_OPTIONS.find((s) => s.key === key);
+    return found ? `Status: ${found.label}` : `Status: ${key}`;
+  };
+
   return (
     <div className="space-y-3">
-      {/* Top Segmented Status Navigation Bar */}
-      <div className="bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1 min-w-max">
-          {STATUS_OPTIONS.map((tab) => {
-            const isSelected = activeStatusTab === tab.key;
-            const count = getStatusCount(tab.key);
-
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveStatusTab(tab.key)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-slate-950 text-white shadow-xs scale-100 font-black'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                    isSelected
-                      ? 'bg-amber-500 text-slate-950'
-                      : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Control Actions Row */}
       <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
         {/* Search Bar */}
@@ -135,45 +107,52 @@ export function OrderFilterToolbar({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Payment Status Dropdown Filter */}
+          {/* Order Status Dropdown Filter */}
           <div className="relative">
             <button
-              onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
+              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
-                paymentFilter !== 'ALL'
-                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                activeStatusTab !== 'ALL'
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs font-black'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
               }`}
             >
-              <span>{paymentFilter === 'ALL' ? 'Payment: All' : `Payment: ${paymentFilter}`}</span>
+              <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span>{getStatusLabel(activeStatusTab)}</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  isPaymentDropdownOpen ? 'rotate-180' : ''
+                className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+                  isStatusDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
             </button>
 
-            {isPaymentDropdownOpen && (
+            {isStatusDropdownOpen && (
               <>
                 <div
                   className="fixed inset-0 z-40"
-                  onClick={() => setIsPaymentDropdownOpen(false)}
+                  onClick={() => setIsStatusDropdownOpen(false)}
                 />
-                <div className="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                  {['ALL', 'PAID', 'UNPAID'].map((p) => (
+                <div className="absolute left-0 sm:left-auto right-auto sm:right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 max-h-64 overflow-y-auto">
+                  <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
+                    Filter by Order Status
+                  </div>
+                  {STATUS_OPTIONS.map((st) => (
                     <button
-                      key={p}
+                      key={st.key}
                       onClick={() => {
-                        setPaymentFilter(p);
-                        setIsPaymentDropdownOpen(false);
+                        setActiveStatusTab(st.key);
+                        setIsStatusDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                        paymentFilter === p
+                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
+                        activeStatusTab === st.key
                           ? 'bg-amber-500 text-slate-950 font-black'
                           : 'text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      {p === 'ALL' ? 'All Payments' : p === 'PAID' ? 'Paid ✓' : 'Unpaid (COD)'}
+                      <span>{st.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 font-bold">
+                        {getStatusCount(st.key)}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -182,19 +161,19 @@ export function OrderFilterToolbar({
           </div>
 
           {/* Date Filter Dropdown */}
-          <div className="relative hidden sm:block">
+          <div className="relative block">
             <button
               onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
                 dateFilter !== 'ALL'
                   ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
               }`}
             >
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
-              <span>{dateFilter === 'ALL' ? 'Date: All Time' : dateFilter}</span>
+              <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span>{dateFilter === 'ALL' ? 'Date: All' : dateFilter}</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
                   isDateDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -237,6 +216,18 @@ export function OrderFilterToolbar({
             >
               <X className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Reset</span>
+            </button>
+          )}
+
+          {/* Export CSV Button */}
+          {onExportCSV && (
+            <button
+              onClick={onExportCSV}
+              className="px-2.5 py-2 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              title="Export Orders to CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Export</span>
             </button>
           )}
 

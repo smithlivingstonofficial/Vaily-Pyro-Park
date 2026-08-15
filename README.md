@@ -68,15 +68,13 @@ Open [http://localhost:3000](http://localhost:3000) to view the storefront.
 
 ---
 
-## 🗄️ Database Setup & Reset
+## 🗄️ Database Setup & Deployment
 
-Execute the migrations in your **Supabase Dashboard → SQL Editor** in numerical order:
+To deploy a clean production or staging database from scratch, execute the consolidated SQL scripts in your **Supabase Dashboard → SQL Editor** in sequence:
 
-1. `20260807_initial_schema.sql` — Base tables (categories, products, inventory, orders)
-2. `20260807_create_admin_user.sql` — Admin authentication & role policies
-3. `20260808_store_settings_and_rls_fixes.sql` — Store settings & regional logistics
-4. `20260808_fix_delivery_zones.sql` — Regional delivery pricing
-5. `20260808_clear_db_and_seed_catalog.sql` — Product catalog seed (145 products across 15 categories)
+1. [`supabase/production_setup/01_production_schema.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/01_production_schema.sql) — Complete core database DDL schema, tables, sequences, functions, high-speed indexes & RLS policies.
+2. [`supabase/production_setup/02_production_admin_user.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/02_production_admin_user.sql) — Admin user authentication setup (`vel56skc@gmail.com`).
+3. [`supabase/production_setup/03_production_seed_data.sql`](file:///c:/Users/smith/Desktop/ElLabs/Vaily%20Pyro%20Park/supabase/production_setup/03_production_seed_data.sql) — Store settings, regional delivery zones, and full Sivakasi product catalog (145 SKUs across 15 categories).
 
 ---
 

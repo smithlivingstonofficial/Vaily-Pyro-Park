@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  ArrowLeft,
   X,
-  Check,
   Package,
   Truck,
   User,
@@ -14,14 +12,10 @@ import {
   MessageSquare,
   Printer,
   Copy,
-  CheckCircle,
-  Clock,
   Send,
   History,
-  ShieldCheck,
-  ExternalLink,
-  Tag,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
@@ -37,7 +31,7 @@ interface OrderDetailsDrawerProps {
     currentStatus: OrderStatus,
     newStatus: OrderStatus
   ) => void;
-  onTogglePaymentSettlement: (orderId: string) => void;
+  onTogglePaymentSettlement?: (orderId: string) => void;
   onSaveLogistics: (
     orderId: string,
     courierPartner: string,
@@ -63,11 +57,10 @@ export function OrderDetailsDrawer({
   onClose,
   onPrintSlip,
   onRequestStatusChange,
-  onTogglePaymentSettlement,
   onSaveLogistics,
   onShowToast,
 }: OrderDetailsDrawerProps) {
-  const [activeTab, setActiveTab] = useState<'items' | 'logistics' | 'customer' | 'audit'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'customer' | 'audit'>('items');
 
   // Logistics form state
   const [courierPartner, setCourierPartner] = useState<string>('ST Courier');
@@ -86,29 +79,34 @@ export function OrderDetailsDrawer({
 
   if (!order) return null;
 
-  const stepperStages: { status: OrderStatus; label: string; icon: string }[] = [
-    { status: 'PENDING', label: 'Placed', icon: '📝' },
-    { status: 'CONFIRMED', label: 'Confirmed', icon: '✓' },
-    { status: 'PACKING', label: 'Packing', icon: '📦' },
-    { status: 'DISPATCHED', label: 'Dispatched', icon: '🚚' },
-    { status: 'DELIVERED', label: 'Delivered', icon: '🎉' },
-  ];
-
-  const getStageIndex = (status: OrderStatus) => {
-    switch (status) {
+  const getNextStatus = (current: OrderStatus): OrderStatus | null => {
+    switch (current) {
       case 'PENDING':
-        return 0;
+        return 'CONFIRMED';
       case 'CONFIRMED':
-        return 1;
+        return 'PACKING';
       case 'PACKING':
       case 'PACKED':
-        return 2;
+        return 'DISPATCHED';
       case 'DISPATCHED':
-        return 3;
-      case 'DELIVERED':
-        return 4;
+        return 'DELIVERED';
       default:
-        return -1;
+        return null;
+    }
+  };
+
+  const getNextStatusLabel = (next: OrderStatus) => {
+    switch (next) {
+      case 'CONFIRMED':
+        return '✓ Confirm Order';
+      case 'PACKING':
+        return '📦 Start Packing';
+      case 'DISPATCHED':
+        return '🚚 Dispatch Order';
+      case 'DELIVERED':
+        return '🎉 Mark Delivered';
+      default:
+        return 'Advance Status';
     }
   };
 
@@ -128,169 +126,121 @@ export function OrderDetailsDrawer({
 
   const handleSaveLogisticsSubmit = () => {
     onSaveLogistics(order.id, courierPartner, trackingNumber, estDeliveryDays, adminNotesInput);
-    onShowToast('✓ Logistics details saved & WhatsApp notification dispatched!', 'success');
+    onShowToast('✓ Logistics saved & WhatsApp notification dispatched!', 'success');
 
     const trackingMsg = `🎆 *ORDER DISPATCH UPDATE: ${order.order_number}* 🎆\n\nDear ${order.customer_name},\nYour Sivakasi crackers order has been dispatched!\n\n• Courier: *${courierPartner}*\n• Tracking ID / LR: *${trackingNumber || 'Assigned'}*\n• Est. Delivery: *${estDeliveryDays}*\n\nThank you for choosing Vaily Pyro Park!`;
     const whatsappUrl = `https://wa.me/91${order.customer_mobile}?text=${encodeURIComponent(trackingMsg)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Mobile Slide-Up Container / Desktop Modal Sheet */}
-      <div className="w-full max-w-5xl bg-white h-[95vh] sm:h-[92vh] max-h-[95vh] rounded-t-[2rem] sm:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden border border-slate-200/90 animate-in slide-in-from-bottom sm:zoom-in-98 duration-200">
-        
-        {/* LIGHT THEME TOP HEADER BAR */}
-        <div className="bg-white text-slate-900 p-3.5 sm:p-5 flex items-center justify-between border-b border-slate-200/80 shrink-0 shadow-2xs">
-          <div className="flex items-center gap-2.5 min-w-0 pr-2">
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer shrink-0"
-              title="Back to Orders"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
+  const nextStatus = getNextStatus(order.status);
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-black text-base sm:text-xl text-slate-950 tracking-tight truncate">
-                  {order.order_number}
-                </h2>
-                <button
-                  onClick={() => onTogglePaymentSettlement(order.id)}
-                  className={`text-[9px] sm:text-[10px] font-black px-2.5 py-0.5 rounded-full cursor-pointer transition-all ${
-                    order.is_paid
-                      ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30'
-                      : 'bg-amber-500/10 text-amber-800 border border-amber-500/30'
-                  }`}
-                  title="Click to toggle payment settlement"
-                >
-                  {order.is_paid ? 'PAID ✓' : 'UNPAID COD'}
-                </button>
-              </div>
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate">
-                Placed on{' '}
-                {new Date(order.created_at).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Mobile Bottom Sheet Container / Desktop Sheet */}
+      <div className="w-full max-w-4xl bg-white h-[96dvh] sm:h-[90vh] max-h-[96dvh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden border border-slate-200/90 animate-in slide-in-from-bottom sm:zoom-in-98 duration-200">
+        
+        {/* STREAMLINED MOBILE HEADER BAR */}
+        <div className="bg-white text-slate-900 px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between border-b border-slate-200/80 shrink-0 shadow-2xs">
+          <div className="min-w-0 pr-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-black text-base sm:text-xl text-slate-950 tracking-tight truncate">
+                {order.order_number}
+              </h2>
+              <span className="text-[10px] bg-emerald-50 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200/80 uppercase tracking-wider">
+                {order.status}
               </span>
             </div>
+            <span className="text-[11px] text-slate-500 font-medium block truncate mt-0.5">
+              Placed on{' '}
+              {new Date(order.created_at).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => onPrintSlip(order)}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold items-center gap-1.5 transition-colors hidden sm:flex cursor-pointer"
+              className="p-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              title="Print Packing Slip / Tax Invoice"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Slip</span>
+              <Printer className="w-4 h-4 text-slate-700" />
             </button>
 
             <a
               href={WhatsAppService.generateOrderWhatsAppLink(order)}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center transition-all shadow-2xs cursor-pointer"
+              title="Send WhatsApp Update"
             >
-              <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <MessageSquare className="w-4 h-4 fill-slate-950" />
             </a>
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              aria-label="Close drawer"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* INTERACTIVE TIMELINE STEPPER PROGRESS BAR */}
-        <div className="bg-slate-50/80 border-b border-slate-200/80 p-3 sm:p-4 shrink-0 overflow-y-auto max-h-60 shadow-2xs">
-          <OrderTimeline
-            status={order.status}
-            adminNotes={order.admin_notes}
-            courierPartner={order.courier_partner}
-            trackingNumber={order.tracking_number}
-            createdAt={order.created_at}
-            updatedAt={order.updated_at}
-            interactive={true}
-            onUpdateStatus={(newStatus) =>
-              onRequestStatusChange(
-                order.id,
-                order.order_number,
-                order.status,
-                newStatus
-              )
-            }
-          />
-        </div>
-
-        {/* LIGHT THEME TAB SELECTION BAR */}
-        <div className="bg-white border-b border-slate-200/80 px-3 sm:px-5 py-2 shrink-0">
+        {/* TOUCH-FRIENDLY NAVIGATION TABS */}
+        <div className="bg-white border-b border-slate-200/80 px-3 py-2 shrink-0">
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab('items')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'items'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black border border-amber-400'
+                  ? 'bg-slate-950 text-white shadow-xs font-black'
                   : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
               <Package className="w-3.5 h-3.5" />
-              <span>Items & Pricing ({order.items?.length || 0})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('logistics')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                activeTab === 'logistics'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black border border-amber-400'
-                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-              }`}
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Logistics Dispatch</span>
+              <span>Items ({order.items?.length || 0})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('customer')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'customer'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black border border-amber-400'
+                  ? 'bg-slate-950 text-white shadow-xs font-black'
                   : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Customer Profile</span>
+              <span>Customer</span>
             </button>
 
             <button
               onClick={() => setActiveTab('audit')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'audit'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black border border-amber-400'
+                  ? 'bg-slate-950 text-white shadow-xs font-black'
                   : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
               <History className="w-3.5 h-3.5" />
-              <span>Audit Logs</span>
+              <span>Audit</span>
             </button>
           </div>
         </div>
 
-        {/* TAB BODY CONTAINER */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 bg-slate-50/50">
+        {/* MAIN TAB CONTENT CONTAINER */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/60 pb-20 sm:pb-6">
           
           {/* TAB 1: ITEMS & FINANCIAL BREAKDOWN */}
           {activeTab === 'items' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-              {/* Ordered Products */}
-              <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+            <div className="space-y-4">
+              {/* Ordered Products Card */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="font-black text-sm text-slate-950 flex items-center gap-2">
                     <Package className="w-4 h-4 text-amber-600" />
@@ -303,9 +253,9 @@ export function OrderDetailsDrawer({
 
                 <div className="divide-y divide-slate-100">
                   {order.items?.map((item) => (
-                    <div key={item.product_id} className="py-3 flex items-center justify-between text-xs gap-2">
+                    <div key={item.product_id} className="py-3 flex items-center justify-between text-xs gap-3">
                       <div className="flex items-center gap-3 truncate pr-2 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden text-base">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden text-base font-bold">
                           {item.image_url ? (
                             <img
                               src={item.image_url}
@@ -334,7 +284,7 @@ export function OrderDetailsDrawer({
               </div>
 
               {/* Financial Calculation Breakdown Card */}
-              <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                 <h3 className="font-black text-sm text-slate-950 border-b border-slate-100 pb-3">
                   Financial Summary
                 </h3>
@@ -367,86 +317,13 @@ export function OrderDetailsDrawer({
                     </span>
                   </div>
                 </div>
-
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-[11px] space-y-1">
-                  <span className="font-bold text-slate-800 block">Payment Reconciled Status:</span>
-                  <p className="text-slate-600">
-                    {order.is_paid
-                      ? '✓ Customer payment settled in shop ledger.'
-                      : '⚠️ Payment pending. Collect cash / UPI payment upon delivery.'}
-                  </p>
-                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: LIGHT THEME LOGISTICS DISPATCHER */}
-          {activeTab === 'logistics' && (
-            <div className="max-w-2xl mx-auto space-y-5">
-              <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-amber-600" />
-                    <span>Logistics & Courier Dispatcher</span>
-                  </h3>
-                  <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                    Fulfillment Form
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">Select Courier Partner</label>
-                    <select
-                      value={courierPartner}
-                      onChange={(e) => setCourierPartner(e.target.value)}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer"
-                    >
-                      {CARRIER_OPTIONS.map((carrier) => (
-                        <option key={carrier} value={carrier}>
-                          {carrier}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">Tracking LR / Reference #</label>
-                    <input
-                      type="text"
-                      value={trackingNumber}
-                      onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="e.g. ST-9840123"
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-slate-400 font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Estimated Delivery Timeline</label>
-                  <input
-                    type="text"
-                    value={estDeliveryDays}
-                    onChange={(e) => setEstDeliveryDays(e.target.value)}
-                    placeholder="e.g. 2-3 Business Days"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-slate-400"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSaveLogisticsSubmit}
-                  className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Save Logistics & Launch WhatsApp Update</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: CUSTOMER PROFILE & ADDRESS */}
+          {/* TAB 2: CUSTOMER PROFILE & SHIPPING ADDRESS */}
           {activeTab === 'customer' && (
-            <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
+            <div className="space-y-4">
               <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
@@ -459,11 +336,11 @@ export function OrderDetailsDrawer({
                 </div>
 
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/20 text-amber-950 font-black flex items-center justify-center text-base sm:text-lg border border-amber-500/30 shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-950 font-black flex items-center justify-center text-base border border-amber-500/30 shrink-0">
                     {getInitials(order.customer_name)}
                   </div>
                   <div className="space-y-1 min-w-0">
-                    <span className="font-black text-base sm:text-lg text-slate-950 block truncate">
+                    <span className="font-black text-base text-slate-950 block truncate">
                       {order.customer_name}
                     </span>
                     <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
@@ -479,7 +356,7 @@ export function OrderDetailsDrawer({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 pt-2">
+                <div className="flex items-center gap-2.5 pt-1">
                   <a
                     href={`tel:${order.customer_mobile}`}
                     className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
@@ -499,7 +376,7 @@ export function OrderDetailsDrawer({
                 </div>
               </div>
 
-              {/* Shipping Address */}
+              {/* Shipping Address Card */}
               <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
@@ -516,7 +393,7 @@ export function OrderDetailsDrawer({
                     className="text-xs font-bold text-amber-800 hover:text-amber-900 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200/80 cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
+                    <span>Copy Address</span>
                   </button>
                 </div>
 
@@ -528,9 +405,9 @@ export function OrderDetailsDrawer({
             </div>
           )}
 
-          {/* TAB 4: AUDIT LOGS & WAREHOUSE NOTES */}
+          {/* TAB 4: AUDIT TRAIL & WAREHOUSE NOTES */}
           {activeTab === 'audit' && (
-            <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
+            <div className="space-y-4">
               {/* Internal Notes Input */}
               <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
                 <h3 className="font-black text-sm text-slate-950 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -596,6 +473,40 @@ export function OrderDetailsDrawer({
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* STICKY BOTTOM MOBILE ACTION BAR INSIDE DRAWER */}
+        <div className="bg-white border-t border-slate-200 p-3 shrink-0 flex items-center justify-between gap-2 shadow-lg">
+          <button
+            onClick={() => onPrintSlip(order)}
+            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border border-slate-200 cursor-pointer shrink-0"
+            title="Print Packing Slip"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+
+          {nextStatus ? (
+            <button
+              onClick={() =>
+                onRequestStatusChange(
+                  order.id,
+                  order.order_number,
+                  order.status,
+                  nextStatus
+                )
+              }
+              className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>{getNextStatusLabel(nextStatus)}</span>
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Done / Close
+            </button>
           )}
         </div>
       </div>

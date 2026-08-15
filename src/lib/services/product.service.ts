@@ -15,6 +15,35 @@ export class ProductService {
   }
 
   /**
+   * Upload product image file to Supabase Storage ('product-images' bucket).
+   * Returns public URL of the uploaded image file.
+   */
+  static async uploadProductImage(file: File): Promise<string> {
+    const supabase = this.getSupabase();
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('Supabase Storage upload error:', error);
+      throw new Error(`Failed to upload image to Supabase Storage: ${error.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+  }
+
+  /**
    * Fetch all active categories from Supabase DB (Cached 30 min).
    */
   static async getCategories(): Promise<Category[]> {
@@ -228,17 +257,6 @@ export class ProductService {
       throw error || new Error('Failed to create product in database.');
     }
 
-    try {
-      await supabase.from('inventory').insert({
-        product_id: data.id,
-        available_stock: initialStock,
-        reserved_stock: 0,
-        safety_threshold: 20,
-      });
-    } catch (invErr) {
-      console.warn('Inventory initial stock insert error:', invErr);
-    }
-
     localCache.clear('products_all');
     return {
       id: data.id,
@@ -377,21 +395,6 @@ export class ProductService {
     if (error) {
       console.error('Supabase bulkCreateProducts error:', error);
       throw error;
-    }
-
-    if (inserted && inserted.length > 0) {
-      const invPayloads = inserted.map((p, idx) => ({
-        product_id: p.id,
-        available_stock: productsList[idx]?.stock || 150,
-        reserved_stock: 0,
-        safety_threshold: 10,
-      }));
-
-      try {
-        await supabase.from('inventory').upsert(invPayloads, { onConflict: 'product_id' });
-      } catch (invErr) {
-        console.warn('Inventory bulk stock insert warning:', invErr);
-      }
     }
 
     localCache.clear('products_all');

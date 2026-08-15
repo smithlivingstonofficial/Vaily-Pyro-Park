@@ -134,16 +134,16 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
             <div className="flex items-center justify-between bg-slate-100/90 px-3 sm:px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200/90">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="w-9 text-center shrink-0">Img</span>
-                <span className="truncate">Product Name</span>
+                <span>Product Name</span>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4 shrink-0 text-right">
-                <span className="w-16 sm:w-20 text-right">Price</span>
-                <span className="w-24 sm:w-28 text-center">Quantity</span>
-                <span className="w-14 sm:w-20 text-right">Total</span>
+              <div className="flex items-center gap-1.5 sm:gap-4 shrink-0 text-right">
+                <span className="w-14 sm:w-20 text-right">Price</span>
+                <span className="w-20 sm:w-28 text-center">Quantity</span>
+                <span className="w-16 sm:w-20 text-right hidden sm:block">Total</span>
               </div>
             </div>
 
-            {/* SINGLE-ROW LIST CONTAINER (Refined Premium Typography & Weights) */}
+            {/* SINGLE-ROW LIST CONTAINER (Refined Premium Typography & Mobile Space Optimization) */}
             <div className="divide-y divide-slate-100">
               {group.items.map((product) => {
                 const qty = cartQtyMap.get(product.id) || 0;
@@ -153,12 +153,12 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                 return (
                   <div
                     key={product.id}
-                    className={`px-3 sm:px-4 py-2 flex items-center justify-between gap-2 transition-colors hover:bg-slate-50/80 ${
+                    className={`px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 transition-colors hover:bg-slate-50/80 ${
                       qty > 0 ? 'bg-amber-50/50 border-l-4 border-l-amber-500' : ''
                     }`}
                   >
                     {/* LEFT: Thumbnail + Product Name */}
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <div
                         onClick={() => onQuickView && onQuickView(product)}
                         className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 rounded-lg overflow-hidden border border-slate-200/80 shrink-0 cursor-pointer group"
@@ -174,10 +174,10 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                         </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 pr-1">
                         <span
                           onClick={() => onQuickView && onQuickView(product)}
-                          className="font-semibold text-slate-800 text-xs sm:text-sm truncate block cursor-pointer hover:text-amber-600 transition-colors leading-snug"
+                          className="font-semibold text-slate-800 text-xs sm:text-sm cursor-pointer hover:text-amber-600 transition-colors leading-snug line-clamp-2 block break-words"
                           title={product.name}
                         >
                           {product.name}
@@ -186,9 +186,9 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                     </div>
 
                     {/* RIGHT COLS: Price | Quantity Stepper | Total */}
-                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
                       {/* Price Column */}
-                      <div className="w-16 sm:w-20 text-right shrink-0">
+                      <div className="w-14 sm:w-20 text-right shrink-0">
                         <div className="font-bold text-slate-900 text-xs sm:text-sm leading-none">
                           ₹{product.selling_price.toFixed(2)}
                         </div>
@@ -200,9 +200,9 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                       </div>
 
                       {/* Quantity Stepper Column */}
-                      <div className="w-24 sm:w-28 text-center shrink-0">
+                      <div className="w-20 sm:w-28 text-center shrink-0">
                         {isOutOfStock ? (
-                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200/80 uppercase">
+                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded border border-red-200/80 uppercase">
                             out of stock
                           </span>
                         ) : (
@@ -211,14 +211,14 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                               type="button"
                               onClick={() => qty > 0 && updateQuantity(product.id, qty - 1)}
                               disabled={qty === 0}
-                              className={`w-6 h-6 rounded flex items-center justify-center text-xs transition-all ${
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center text-xs transition-all ${
                                 qty > 0
                                   ? 'bg-white text-slate-800 font-bold shadow-2xs hover:bg-slate-50 cursor-pointer active:scale-95 border border-slate-200/60'
                                   : 'bg-transparent text-slate-300 cursor-not-allowed'
                               }`}
                               aria-label="Decrease Quantity"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             </button>
 
                             <input
@@ -229,23 +229,23 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
                                 const val = parseInt(e.target.value, 10);
                                 updateQuantity(product.id, isNaN(val) || val < 0 ? 0 : val);
                               }}
-                              className="w-7 text-center font-bold text-xs text-slate-900 bg-transparent outline-none"
+                              className="w-6 sm:w-7 text-center font-bold text-xs text-slate-900 bg-transparent outline-none"
                             />
 
                             <button
                               type="button"
                               onClick={() => addToCart(product, 1)}
-                              className="w-6 h-6 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+                              className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
                               aria-label="Increase Quantity"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             </button>
                           </div>
                         )}
                       </div>
 
-                      {/* Item Total Column */}
-                      <div className="w-14 sm:w-20 text-right shrink-0">
+                      {/* Item Total Column (Hidden on small mobile to give maximum width to Product Name) */}
+                      <div className="w-14 sm:w-20 text-right shrink-0 hidden sm:block">
                         <span
                           className={`text-xs sm:text-sm block ${
                             itemTotal > 0 ? 'text-amber-600 font-bold' : 'text-slate-400 font-normal'

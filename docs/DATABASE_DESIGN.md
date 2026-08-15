@@ -14,17 +14,12 @@ The database is built on PostgreSQL 15 via Supabase. It uses strict single-shop 
                             ▼
       ┌──────────────┐     ┌──────────────┐
       │    orders    │───< │ order_items  │
-      └──────┬───────┘     └──────────────┘
-             │
-             ▼
-      ┌──────────────┐
-      │  inventory   │
-      └──────────────┘
+      └──────────────┘     └──────────────┘
 ```
 
 ---
 
-## 2. PostgreSQL DDL (Single Shop)
+## 2. PostgreSQL DDL (Single Shop Current Schema)
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -63,29 +58,7 @@ CREATE TABLE products (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. INVENTORY & MOVEMENTS
-CREATE TABLE inventory (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID UNIQUE NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    available_stock INT NOT NULL DEFAULT 0 CHECK (available_stock >= 0),
-    reserved_stock INT NOT NULL DEFAULT 0 CHECK (reserved_stock >= 0),
-    safety_threshold INT NOT NULL DEFAULT 10,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TYPE movement_type AS ENUM ('PURCHASE', 'RESERVATION', 'SALE', 'CANCELLATION', 'DAMAGE', 'ADJUSTMENT');
-
-CREATE TABLE inventory_movements (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    type movement_type NOT NULL,
-    quantity INT NOT NULL,
-    reason TEXT,
-    created_by UUID,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 4. ORDERS & PRICE SNAPSHOTS
+-- 3. ORDERS & ORDER ITEMS
 CREATE TYPE order_status AS ENUM ('PENDING', 'CONFIRMED', 'PACKING', 'PACKED', 'DISPATCHED', 'DELIVERED', 'CANCELLED');
 
 CREATE TABLE orders (
@@ -104,6 +77,12 @@ CREATE TABLE orders (
     grand_total DECIMAL(10, 2) NOT NULL,
     status order_status DEFAULT 'PENDING',
     admin_notes TEXT,
+    courier_partner VARCHAR(100),
+    tracking_number VARCHAR(100),
+    estimated_delivery VARCHAR(50),
+    is_paid BOOLEAN DEFAULT false,
+    payment_method VARCHAR(50) DEFAULT 'COD',
+    history JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -125,7 +104,22 @@ CREATE TABLE order_items (
 ```sql
 CREATE INDEX idx_products_search ON products USING gin(name gin_trgm_ops);
 CREATE INDEX idx_products_category ON products(category_id) WHERE is_active = true;
+CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX idx_orders_customer_mobile ON orders(customer_mobile);
 CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_inventory_product ON inventory(product_id);
+CREATE INDEX idx_orders_city ON orders(city);
+```
+
+---
+
+## 4. Helper Functions & Sequences
+```sql
+CREATE SEQUENCE IF NOT EXISTS order_seq START 1001;
+
+CREATE OR REPLACE FUNCTION next_order_number()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN 'VPP-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(nextval('order_seq')::TEXT, 4, '0');
+END;
+$$ LANGUAGE plpgsql;
 ```

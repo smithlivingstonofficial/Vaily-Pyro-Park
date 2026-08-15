@@ -99,7 +99,7 @@ export default function StorefrontPage() {
     }
   }, [selectedCategory, searchQuery, viewMode, isLoaded]);
 
-  const { itemCount, subtotal, addToCart } = useCart();
+  const { itemCount, subtotal, addToCart, remainingForMinOrder, isMinOrderReached } = useCart();
 
   // Filtered products list
   const filteredProducts = useMemo(() => {
@@ -304,30 +304,45 @@ export default function StorefrontPage() {
         </main>
       </div>
 
-      {/* Sticky Bottom Order Summary Floating Bar */}
+      {/* Sticky Bottom Order Summary Floating Bar (Glassmorphic Premium Design) */}
       {itemCount > 0 && (
-        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 bg-slate-950 text-white p-3.5 sm:p-4 rounded-3xl shadow-2xl border border-amber-500/40 animate-in slide-in-from-bottom duration-200">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-xs font-black text-amber-400">
-                <ShoppingBag className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{itemCount} {itemCount === 1 ? 'Item' : 'Items'} Selected</span>
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-lg z-40 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-slate-950/92 backdrop-blur-xl border border-amber-500/40 p-3 sm:p-3.5 rounded-3xl shadow-[0_10px_35px_rgba(0,0,0,0.6),0_0_25px_rgba(245,158,11,0.25)] flex items-center justify-between gap-3 text-white">
+            {/* Left Info Column */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] sm:text-[11px] font-bold border border-amber-500/30 shrink-0">
+                  <ShoppingBag className="w-3 h-3 text-amber-400" />
+                  <span>{itemCount} {itemCount === 1 ? 'Item' : 'Items'}</span>
+                </span>
+                {!isMinOrderReached && remainingForMinOrder > 0 && (
+                  <span className="text-[10px] text-amber-300/80 font-medium truncate hidden xs:inline">
+                    • Add ₹{remainingForMinOrder.toLocaleString()} more
+                  </span>
+                )}
               </div>
-              <div className="text-base sm:text-lg font-black text-white font-mono leading-tight">
-                Total: ₹{subtotal.toLocaleString()}
+
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xs text-slate-400 font-medium">Total:</span>
+                <span className="text-base sm:text-xl font-bold text-white tracking-tight">
+                  ₹{subtotal.toLocaleString()}
+                </span>
               </div>
             </div>
 
+            {/* Right Action Buttons Column */}
             <div className="flex items-center gap-2 shrink-0">
               <button
+                type="button"
                 onClick={() => setIsCartOpen(true)}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-2xl transition-all cursor-pointer backdrop-blur-md active:scale-95 border border-white/10"
               >
                 View Cart
               </button>
+
               <Link
                 href="/checkout"
-                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-98 flex items-center gap-1"
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-2xl shadow-lg shadow-amber-500/25 transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
               >
                 <span>Checkout</span>
                 <ChevronRight className="w-4 h-4" />
