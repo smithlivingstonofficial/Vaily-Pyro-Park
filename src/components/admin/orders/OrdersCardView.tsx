@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CheckSquare,
   Square,
@@ -10,6 +8,7 @@ import {
   Printer,
   PhoneCall,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
@@ -27,6 +26,7 @@ interface OrdersCardViewProps {
     newStatus: OrderStatus
   ) => void;
   onTogglePaymentSettlement?: (orderId: string) => void;
+  onOpenWhatsAppModal?: (order: Order) => void;
 }
 
 export function OrdersCardView({
@@ -36,7 +36,15 @@ export function OrdersCardView({
   onSelectOrder,
   onPrintSlip,
   onRequestStatusChange,
+  onTogglePaymentSettlement,
+  onOpenWhatsAppModal,
 }: OrdersCardViewProps) {
+  const router = useRouter();
+
+  const handleCardClick = (order: Order) => {
+    router.push(`/admin/orders/${order.order_number}`);
+  };
+
   const getStatusBadgeStyle = (status: OrderStatus) => {
     switch (status) {
       case 'PENDING':
@@ -158,7 +166,7 @@ export function OrdersCardView({
         return (
           <div
             key={order.id}
-            onClick={() => onSelectOrder(order)}
+            onClick={() => handleCardClick(order)}
             className={`bg-white rounded-3xl border transition-all duration-200 p-3.5 sm:p-4.5 flex flex-col justify-between space-y-3 relative overflow-hidden group cursor-pointer ${
               isSelected
                 ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
@@ -189,9 +197,9 @@ export function OrdersCardView({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelectOrder(order);
+                      handleCardClick(order);
                     }}
-                    className="font-black text-slate-950 text-base tracking-tight hover:text-amber-600 transition-colors cursor-pointer truncate"
+                    className="font-bold text-slate-900 text-base tracking-tight hover:text-amber-600 transition-colors cursor-pointer truncate"
                   >
                     <span>{order.order_number}</span>
                   </button>
@@ -251,17 +259,21 @@ export function OrdersCardView({
                     <span>Call</span>
                   </a>
 
-                  <a
-                    href={WhatsAppService.generateOrderWhatsAppLink(order)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onOpenWhatsAppModal) {
+                        onOpenWhatsAppModal(order);
+                      } else {
+                        window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank');
+                      }
+                    }}
                     className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                    title="Send WhatsApp Update"
+                    title="Send WhatsApp Update to Customer"
                   >
                     <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
                     <span>WhatsApp</span>
-                  </a>
+                  </button>
                 </div>
               </div>
 

@@ -124,6 +124,19 @@ export class OrderService {
       items: itemsData || pricing.items,
     };
 
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('vpp_last_created_order', JSON.stringify(createdOrder));
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('vpp_orders_channel');
+          bc.postMessage({ type: 'NEW_ORDER', order: createdOrder });
+          bc.close();
+        }
+      } catch (e) {
+        console.error('Failed to broadcast order creation:', e);
+      }
+    }
+
     return createdOrder;
   }
 

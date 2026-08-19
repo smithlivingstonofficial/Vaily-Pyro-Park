@@ -1,0 +1,20 @@
+import type { MetadataRoute } from 'next';
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Vaily Pyro Park Admin Console',
+    short_name: 'VPP Admin',
+    description: 'Sivakasi Fireworks Direct Factory Admin & Order Operations',
+    start_url: '/admin',
+    display: 'standalone',
+    background_color: '#0f172a',
+    theme_color: '#f59e0b',
+    icons: [
+      {
+        src: '/favicon.ico',
+        sizes: 'any',
+        type: 'image/x-icon',
+      },
+    ],
+  };
+}

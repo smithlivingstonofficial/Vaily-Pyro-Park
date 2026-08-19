@@ -40,6 +40,15 @@ export class AuthService {
     return data.session;
   }
 
+  static async updatePassword(newPassword: string) {
+    const supabase = this.getSupabase();
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) throw error;
+    return data.user;
+  }
+
   static async getCurrentSession() {
     const supabase = this.getSupabase();
     const { data } = await supabase.auth.getSession();

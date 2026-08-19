@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   CheckSquare,
   Square,
@@ -30,6 +31,7 @@ interface OrdersTableViewProps {
     newStatus: OrderStatus
   ) => void;
   onTogglePaymentSettlement?: (orderId: string) => void;
+  onOpenWhatsAppModal?: (order: Order) => void;
 }
 
 export function OrdersTableView({
@@ -41,6 +43,7 @@ export function OrdersTableView({
   onPrintSlip,
   onRequestStatusChange,
   onTogglePaymentSettlement,
+  onOpenWhatsAppModal,
 }: OrdersTableViewProps) {
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
@@ -160,13 +163,13 @@ export function OrdersTableView({
 
                   {/* Order Number & Date */}
                   <td className="p-3.5">
-                    <button
-                      onClick={() => onSelectOrder(order)}
-                      className="font-black text-slate-950 hover:text-amber-600 transition-colors text-xs flex items-center gap-1.5 cursor-pointer group"
+                    <Link
+                      href={`/admin/orders/${order.order_number}`}
+                      className="font-bold text-slate-900 hover:text-amber-600 transition-colors text-xs flex items-center gap-1.5 cursor-pointer group"
                     >
                       <span>{order.order_number}</span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all" />
-                    </button>
+                    </Link>
                     <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
                       {new Date(order.created_at).toLocaleDateString('en-IN', {
                         day: 'numeric',
@@ -228,15 +231,17 @@ export function OrdersTableView({
                   {/* Quick Action Buttons */}
                   <td className="p-3.5 text-right pr-5">
                     <div className="flex items-center justify-end gap-1.5">
-                      <a
-                        href={WhatsAppService.generateOrderWhatsAppLink(order)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-2xs"
-                        title="Send WhatsApp Update"
+                      <button
+                        onClick={() =>
+                          onOpenWhatsAppModal
+                            ? onOpenWhatsAppModal(order)
+                            : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
+                        }
+                        className="p-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-2xs cursor-pointer"
+                        title="Send WhatsApp Update to Customer"
                       >
                         <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
-                      </a>
+                      </button>
 
                       <button
                         onClick={() => onPrintSlip(order)}
@@ -269,12 +274,12 @@ export function OrdersTableView({
                         </button>
                       )}
 
-                      <button
-                        onClick={() => onSelectOrder(order)}
-                        className="px-3 py-1 bg-slate-950 hover:bg-slate-900 text-white font-bold rounded-xl text-[11px] transition-colors cursor-pointer"
+                      <Link
+                        href={`/admin/orders/${order.order_number}`}
+                        className="px-3 py-1 bg-slate-950 hover:bg-slate-900 text-white font-semibold rounded-xl text-[11px] transition-colors cursor-pointer inline-block"
                       >
                         Details
-                      </button>
+                      </Link>
                     </div>
                   </td>
                 </tr>

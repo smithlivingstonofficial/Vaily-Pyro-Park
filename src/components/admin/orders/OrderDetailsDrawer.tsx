@@ -40,6 +40,7 @@ interface OrderDetailsDrawerProps {
     adminNotes?: string
   ) => void;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  onOpenWhatsAppModal?: (order: Order, template?: any) => void;
 }
 
 const CARRIER_OPTIONS = [
@@ -59,6 +60,7 @@ export function OrderDetailsDrawer({
   onRequestStatusChange,
   onSaveLogistics,
   onShowToast,
+  onOpenWhatsAppModal,
 }: OrderDetailsDrawerProps) {
   const [activeTab, setActiveTab] = useState<'items' | 'customer' | 'audit'>('items');
 
@@ -126,11 +128,19 @@ export function OrderDetailsDrawer({
 
   const handleSaveLogisticsSubmit = () => {
     onSaveLogistics(order.id, courierPartner, trackingNumber, estDeliveryDays, adminNotesInput);
-    onShowToast('✓ Logistics saved & WhatsApp notification dispatched!', 'success');
+    onShowToast('✓ Logistics saved!', 'success');
 
-    const trackingMsg = `🎆 *ORDER DISPATCH UPDATE: ${order.order_number}* 🎆\n\nDear ${order.customer_name},\nYour Sivakasi crackers order has been dispatched!\n\n• Courier: *${courierPartner}*\n• Tracking ID / LR: *${trackingNumber || 'Assigned'}*\n• Est. Delivery: *${estDeliveryDays}*\n\nThank you for choosing Vaily Pyro Park!`;
-    const whatsappUrl = `https://wa.me/91${order.customer_mobile}?text=${encodeURIComponent(trackingMsg)}`;
-    window.open(whatsappUrl, '_blank');
+    if (onOpenWhatsAppModal) {
+      onOpenWhatsAppModal(order, 'DISPATCH_TRACKING');
+    } else {
+      const whatsappUrl = WhatsAppService.generateCustomerWhatsAppLink(order, {
+        templateType: 'DISPATCH_TRACKING',
+        courierPartner,
+        trackingNumber,
+        estDeliveryDays,
+      });
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   const nextStatus = getNextStatus(order.status);
@@ -172,15 +182,17 @@ export function OrderDetailsDrawer({
               <Printer className="w-4 h-4 text-slate-700" />
             </button>
 
-            <a
-              href={WhatsAppService.generateOrderWhatsAppLink(order)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() =>
+                onOpenWhatsAppModal
+                  ? onOpenWhatsAppModal(order, 'ORDER_RECEIPT')
+                  : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
+              }
               className="p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center transition-all shadow-2xs cursor-pointer"
-              title="Send WhatsApp Update"
+              title="Send WhatsApp to Customer"
             >
               <MessageSquare className="w-4 h-4 fill-slate-950" />
-            </a>
+            </button>
 
             <button
               onClick={onClose}
@@ -364,15 +376,17 @@ export function OrderDetailsDrawer({
                     <PhoneCall className="w-4 h-4" />
                     <span>Call Phone</span>
                   </a>
-                  <a
-                    href={WhatsAppService.generateOrderWhatsAppLink(order)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() =>
+                      onOpenWhatsAppModal
+                        ? onOpenWhatsAppModal(order, 'ORDER_RECEIPT')
+                        : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
+                    }
                     className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer"
                   >
                     <MessageSquare className="w-4 h-4 fill-slate-950" />
                     <span>WhatsApp</span>
-                  </a>
+                  </button>
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Papa from 'papaparse';
 import { OrderService } from '@/lib/services/order.service';
 import { Order, OrderStatus } from '@/types';
@@ -11,7 +12,6 @@ import { OrderFilterToolbar } from '@/components/admin/orders/OrderFilterToolbar
 import { BatchActionBar } from '@/components/admin/orders/BatchActionBar';
 import { OrdersTableView } from '@/components/admin/orders/OrdersTableView';
 import { OrdersCardView } from '@/components/admin/orders/OrdersCardView';
-import { OrderDetailsDrawer } from '@/components/admin/orders/OrderDetailsDrawer';
 import { PackingSlipModal } from '@/components/admin/orders/PackingSlipModal';
 import {
   StatusConfirmationModal,
@@ -21,16 +21,20 @@ import {
   ToastNotification,
   ToastMessage,
 } from '@/components/admin/orders/ToastNotification';
+import { WhatsAppModal } from '@/components/admin/orders/WhatsAppModal';
+import { WhatsAppTemplateType } from '@/lib/services/whatsapp.service';
 
 export default function AdminOrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeStatusTab, setActiveStatusTab] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<Order | null>(null);
+  const [whatsAppOrder, setWhatsAppOrder] = useState<Order | null>(null);
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState<WhatsAppTemplateType | undefined>(undefined);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
 
@@ -128,9 +132,6 @@ export default function AdminOrdersPage() {
     const updated = await OrderService.updateOrderStatus(orderId, newStatus);
 
     setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(updated);
-    }
 
     addToast(`Order #${pendingStatusChange.orderNumber} updated to ${newStatus}`, 'success');
     setPendingStatusChange(null);
@@ -145,7 +146,6 @@ export default function AdminOrdersPage() {
     try {
       const updated = await OrderService.markOrderPaid(orderId, newPaidState);
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-      if (selectedOrder?.id === orderId) setSelectedOrder(updated);
       addToast(
         `Payment marked as ${newPaidState ? 'PAID ✓' : 'UNPAID COD'} for ${target.order_number}`,
         'info'
@@ -183,7 +183,6 @@ export default function AdminOrdersPage() {
         status: newStatus,
       });
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-      if (selectedOrder?.id === orderId) setSelectedOrder(updated);
       addToast(`Logistics saved & order marked as ${newStatus}`, 'success');
     } catch (err: any) {
       addToast(`Failed to save logistics: ${err.message}`, 'error');
@@ -268,6 +267,11 @@ export default function AdminOrdersPage() {
     addToast('Order filters reset to default', 'info');
   };
 
+  const handleOpenWhatsAppModal = (order: Order, template?: WhatsAppTemplateType) => {
+    setWhatsAppTemplate(template || 'ORDER_RECEIPT');
+    setWhatsAppOrder(order);
+  };
+
   return (
     <div className="space-y-3.5 sm:space-y-5">
       {/* Operations Executive KPI Metric Strip */}
@@ -312,20 +316,22 @@ export default function AdminOrdersPage() {
           selectedOrderIds={selectedOrderIds}
           onToggleSelection={handleToggleOrderSelection}
           onSelectAll={handleSelectAll}
-          onSelectOrder={(order) => setSelectedOrder(order)}
+          onSelectOrder={(order) => router.push(`/admin/orders/${order.order_number}`)}
           onPrintSlip={(order) => setPackingSlipOrder(order)}
           onRequestStatusChange={requestStatusChange}
           onTogglePaymentSettlement={handleTogglePaymentSettlement}
+          onOpenWhatsAppModal={handleOpenWhatsAppModal}
         />
       ) : (
         <OrdersCardView
           orders={filteredOrders}
           selectedOrderIds={selectedOrderIds}
           onToggleSelection={handleToggleOrderSelection}
-          onSelectOrder={(order) => setSelectedOrder(order)}
+          onSelectOrder={(order) => router.push(`/admin/orders/${order.order_number}`)}
           onPrintSlip={(order) => setPackingSlipOrder(order)}
           onRequestStatusChange={requestStatusChange}
           onTogglePaymentSettlement={handleTogglePaymentSettlement}
+          onOpenWhatsAppModal={handleOpenWhatsAppModal}
         />
       )}
 
@@ -338,14 +344,11 @@ export default function AdminOrdersPage() {
         onDeselectAll={() => setSelectedOrderIds([])}
       />
 
-      {/* Order Details Enterprise Slide-Over Sheet */}
-      <OrderDetailsDrawer
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        onPrintSlip={(order) => setPackingSlipOrder(order)}
-        onRequestStatusChange={requestStatusChange}
-        onTogglePaymentSettlement={handleTogglePaymentSettlement}
-        onSaveLogistics={handleSaveLogistics}
+      {/* WhatsApp Message Composer Modal */}
+      <WhatsAppModal
+        order={whatsAppOrder}
+        initialTemplate={whatsAppTemplate}
+        onClose={() => setWhatsAppOrder(null)}
         onShowToast={addToast}
       />
 
