@@ -9,11 +9,11 @@ import {
   Phone,
   MapPin,
   Truck,
-  MessageSquare,
   Printer,
   Eye,
   ChevronRight,
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
 
@@ -237,10 +237,10 @@ export function OrdersTableView({
                             ? onOpenWhatsAppModal(order)
                             : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
                         }
-                        className="p-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-2xs cursor-pointer"
+                        className="p-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all shadow-xs cursor-pointer"
                         title="Send WhatsApp Update to Customer"
                       >
-                        <MessageSquare className="w-3.5 h-3.5 fill-slate-950" />
+                        <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
                       </button>
 
                       <button

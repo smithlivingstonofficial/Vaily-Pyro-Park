@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, Package, ArrowLeft, CheckCircle2, MessageSquare, AlertCircle } from 'lucide-react';
+import { Search, Package, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { OrderService } from '@/lib/services/order.service';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
 import { OrderTimeline } from '@/components/common/OrderTimeline';
@@ -134,9 +135,10 @@ export default function TrackOrderPage() {
                     href={WhatsAppService.generateOrderWhatsAppLink(searchedOrder)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs"
                   >
-                    <MessageSquare className="w-4 h-4 fill-slate-950" /> WhatsApp Copy
+                    <WhatsAppIcon className="w-4 h-4 fill-white" />
+                    <span className="text-white">WhatsApp Copy</span>
                   </a>
                 </div>
               </div>

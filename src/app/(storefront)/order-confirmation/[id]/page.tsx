@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import confetti from 'canvas-confetti';
-import { CheckCircle2, MessageSquare, Package, ArrowRight, Truck, MapPin, Calendar, Clock, ShoppingBag } from 'lucide-react';
+import { CheckCircle2, Package, ArrowRight, Truck, MapPin, Calendar, Clock, ShoppingBag } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { OrderService } from '@/lib/services/order.service';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
 import { OrderTimeline } from '@/components/common/OrderTimeline';
@@ -112,10 +113,10 @@ export default function OrderConfirmationPage() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl transition-all active:scale-98"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black rounded-2xl text-sm shadow-xl transition-all active:scale-98"
             >
-              <MessageSquare className="w-5 h-5 fill-slate-950" />
-              <span>SEND ORDER COPY TO WHATSAPP</span>
+              <WhatsAppIcon className="w-5 h-5 fill-white" />
+              <span className="text-white">SEND ORDER COPY TO WHATSAPP</span>
             </a>
           </div>
         </div>

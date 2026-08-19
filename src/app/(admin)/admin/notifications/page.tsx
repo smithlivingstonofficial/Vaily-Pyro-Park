@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Bell,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ShoppingBag,
   ArrowLeft,
+  RefreshCw,
 } from 'lucide-react';
 import { useAdminNotification } from '@/context/AdminNotificationContext';
 
@@ -27,7 +28,16 @@ export default function AdminNotificationsPage() {
     markAsRead,
     markAllAsRead,
     clearAllNotifications,
+    refreshNotifications,
   } = useAdminNotification();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshNotifications();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   return (
     <div className="space-y-4 font-sans max-w-4xl mx-auto pb-12">
@@ -51,6 +61,15 @@ export default function AdminNotificationsPage() {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl shadow-2xs transition-all cursor-pointer border border-slate-200"
+            title="Sync latest orders from database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-600' : ''}`} />
+            <span>Sync DB</span>
+          </button>
+
           <button
             onClick={toggleMute}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${

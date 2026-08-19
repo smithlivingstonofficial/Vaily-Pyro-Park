@@ -179,7 +179,7 @@ export const BulkCSVImportModal: React.FC<BulkCSVImportModalProps> = ({ isOpen, 
             </button>
           </div>
           <p className="text-amber-900 text-[11px] font-medium leading-relaxed">
-            Must contain column headers: <code className="font-mono bg-white/80 px-1.5 py-0.5 rounded text-amber-950 font-bold border border-amber-300">name, sku, pack_size, mrp, selling_price, sound_level, stock</code>.
+            Must contain column headers: <code className="font-mono bg-white/80 px-1.5 py-0.5 rounded text-amber-950 font-bold border border-amber-300">name, sku, pack_size, mrp, selling_price, sound_level</code>.
           </p>
         </div>
 

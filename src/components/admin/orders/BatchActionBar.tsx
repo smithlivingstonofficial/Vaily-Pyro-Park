@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Package, Truck, CreditCard, Download, X } from 'lucide-react';
+import { CheckCircle2, Package, Truck, Download, X } from 'lucide-react';
 import { OrderStatus } from '@/types';
 
 interface BatchActionBarProps {
   selectedCount: number;
   onBulkStatusUpdate: (status: OrderStatus) => void;
-  onBulkPaymentUpdate?: (isPaid: boolean) => void;
   onExportCSV: () => void;
   onDeselectAll: () => void;
 }

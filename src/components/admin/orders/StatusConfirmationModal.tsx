@@ -86,7 +86,7 @@ export function StatusConfirmationModal({
             <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl text-[11px] font-bold flex items-start gap-2 mt-2">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <span>
-                Warning: Cancelling this order will mark it as void in your system ledger and reserve stock will be released.
+                Warning: Cancelling this order will mark it as void in your system ledger.
               </span>
             </div>
           )}

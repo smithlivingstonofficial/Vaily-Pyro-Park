@@ -339,7 +339,6 @@ export default function AdminOrdersPage() {
       <BatchActionBar
         selectedCount={selectedOrderIds.length}
         onBulkStatusUpdate={handleBulkStatusUpdate}
-        onBulkPaymentUpdate={handleBulkPaymentUpdate}
         onExportCSV={handleExportCSV}
         onDeselectAll={() => setSelectedOrderIds([])}
       />

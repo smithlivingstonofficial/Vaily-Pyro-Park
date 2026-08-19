@@ -12,6 +12,7 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
+  RefreshCw,
 } from 'lucide-react';
 import { useAdminNotification } from '@/context/AdminNotificationContext';
 
@@ -28,9 +29,18 @@ export function AdminNotificationBell() {
     dismissToast,
     markAsRead,
     markAllAsRead,
+    refreshNotifications,
   } = useAdminNotification();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshNotifications();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -123,15 +133,24 @@ export function AdminNotificationBell() {
                 </span>
               )}
 
-              {unreadCount > 0 && (
+              <div className="flex items-center gap-1.5">
                 <button
-                  onClick={markAllAsRead}
-                  className="px-2.5 py-1 text-slate-700 hover:text-slate-950 font-extrabold hover:bg-slate-200 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1"
+                  onClick={handleRefresh}
+                  className="p-1.5 text-slate-500 hover:text-slate-950 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                  title="Sync with database"
                 >
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  <span>Mark Read</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-600' : ''}`} />
                 </button>
-              )}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="px-2.5 py-1 text-slate-700 hover:text-slate-950 font-extrabold hover:bg-slate-200 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Mark Read</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notifications List */}

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Printer,
-  MessageSquare,
   Phone,
   MapPin,
   Calendar,
@@ -24,8 +23,8 @@ import {
   Send,
   History,
   ShieldCheck,
-  CreditCard,
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { OrderService } from '@/lib/services/order.service';
 import { ProductService } from '@/lib/services/product.service';
 import { Order, OrderStatus, OrderItem, Product } from '@/types';
@@ -342,19 +341,6 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
 
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={handleTogglePaymentSettlement}
-              className={`px-2.5 py-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1 border ${
-                order.is_paid
-                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100'
-              }`}
-              title="Click to toggle payment settlement state"
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>{order.is_paid ? 'PAID ✓' : 'UNPAID COD'}</span>
-            </button>
-
-            <button
               onClick={() => setIsPackingSlipOpen(true)}
               className="p-1.5 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1 border border-slate-200"
               title="Print Packing Slip / Tax Invoice"
@@ -368,11 +354,11 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
                 setWhatsAppTemplate('ORDER_RECEIPT');
                 setIsWhatsAppOpen(true);
               }}
-              className="p-1.5 sm:px-3 sm:py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1"
+              className="p-1.5 sm:px-3 sm:py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
               title="Compose WhatsApp Message"
             >
-              <MessageSquare className="w-4 h-4 fill-slate-950" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <WhatsAppIcon className="w-4 h-4 fill-white" />
+              <span className="hidden sm:inline text-white">WhatsApp</span>
             </button>
           </div>
         </div>
@@ -587,10 +573,10 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
                   setWhatsAppTemplate('ORDER_RECEIPT');
                   setIsWhatsAppOpen(true);
                 }}
-                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer"
+                className="flex-1 py-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
               >
-                <MessageSquare className="w-4 h-4 fill-slate-950" />
-                <span>WhatsApp</span>
+                <WhatsAppIcon className="w-4 h-4 fill-white" />
+                <span className="text-white">WhatsApp</span>
               </button>
             </div>
           </div>

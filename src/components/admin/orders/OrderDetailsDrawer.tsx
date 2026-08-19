@@ -9,7 +9,6 @@ import {
   MapPin,
   FileText,
   PhoneCall,
-  MessageSquare,
   Printer,
   Copy,
   Send,
@@ -17,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { Order, OrderStatus } from '@/types';
 import { WhatsAppService } from '@/lib/services/whatsapp.service';
 import { OrderTimeline } from '@/components/common/OrderTimeline';
@@ -188,10 +188,10 @@ export function OrderDetailsDrawer({
                   ? onOpenWhatsAppModal(order, 'ORDER_RECEIPT')
                   : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
               }
-              className="p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center transition-all shadow-2xs cursor-pointer"
+              className="p-2 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl text-xs flex items-center transition-all shadow-xs cursor-pointer"
               title="Send WhatsApp to Customer"
             >
-              <MessageSquare className="w-4 h-4 fill-slate-950" />
+              <WhatsAppIcon className="w-4 h-4 fill-white" />
             </button>
 
             <button
@@ -382,10 +382,10 @@ export function OrderDetailsDrawer({
                         ? onOpenWhatsAppModal(order, 'ORDER_RECEIPT')
                         : window.open(WhatsAppService.generateCustomerWhatsAppLink(order), '_blank')
                     }
-                    className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer"
+                    className="flex-1 py-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
                   >
-                    <MessageSquare className="w-4 h-4 fill-slate-950" />
-                    <span>WhatsApp</span>
+                    <WhatsAppIcon className="w-4 h-4 fill-white" />
+                    <span className="text-white">WhatsApp</span>
                   </button>
                 </div>
               </div>

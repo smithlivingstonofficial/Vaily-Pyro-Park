@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Smartphone, Download, CheckCircle2, Share, PlusSquare, X } from 'lucide-react';
+import { Smartphone, Download, Share, PlusSquare, X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -76,12 +76,7 @@ export function PwaInstallPrompt() {
   };
 
   if (isInstalled) {
-    return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/80 shrink-0">
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-        <span className="hidden sm:inline">PWA Installed</span>
-      </div>
-    );
+    return null;
   }
 
   return (

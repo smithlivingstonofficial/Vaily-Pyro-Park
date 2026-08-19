@@ -148,7 +148,6 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
               {group.items.map((product) => {
                 const qty = cartQtyMap.get(product.id) || 0;
                 const itemTotal = product.selling_price * qty;
-                const isOutOfStock = product.stock !== undefined && product.stock <= 0;
 
                 return (
                   <div
@@ -201,47 +200,41 @@ export const PriceListTable: React.FC<PriceListTableProps> = ({
 
                       {/* Quantity Stepper Column */}
                       <div className="w-20 sm:w-28 text-center shrink-0">
-                        {isOutOfStock ? (
-                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded border border-red-200/80 uppercase">
-                            out of stock
-                          </span>
-                        ) : (
-                          <div className="flex items-center justify-center gap-0.5 bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/80">
-                            <button
-                              type="button"
-                              onClick={() => qty > 0 && updateQuantity(product.id, qty - 1)}
-                              disabled={qty === 0}
-                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center text-xs transition-all ${
-                                qty > 0
-                                  ? 'bg-white text-slate-800 font-bold shadow-2xs hover:bg-slate-50 cursor-pointer active:scale-95 border border-slate-200/60'
-                                  : 'bg-transparent text-slate-300 cursor-not-allowed'
-                              }`}
-                              aria-label="Decrease Quantity"
-                            >
-                              <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            </button>
+                        <div className="flex items-center justify-center gap-0.5 bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/80">
+                          <button
+                            type="button"
+                            onClick={() => qty > 0 && updateQuantity(product.id, qty - 1)}
+                            disabled={qty === 0}
+                            className={`w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center text-xs transition-all ${
+                              qty > 0
+                                ? 'bg-white text-slate-800 font-bold shadow-2xs hover:bg-slate-50 cursor-pointer active:scale-95 border border-slate-200/60'
+                                : 'bg-transparent text-slate-300 cursor-not-allowed'
+                            }`}
+                            aria-label="Decrease Quantity"
+                          >
+                            <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          </button>
 
-                            <input
-                              type="number"
-                              min={0}
-                              value={qty}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value, 10);
-                                updateQuantity(product.id, isNaN(val) || val < 0 ? 0 : val);
-                              }}
-                              className="w-6 sm:w-7 text-center font-bold text-xs text-slate-900 bg-transparent outline-none"
-                            />
+                          <input
+                            type="number"
+                            min={0}
+                            value={qty}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateQuantity(product.id, isNaN(val) || val < 0 ? 0 : val);
+                            }}
+                            className="w-6 sm:w-7 text-center font-bold text-xs text-slate-900 bg-transparent outline-none"
+                          />
 
-                            <button
-                              type="button"
-                              onClick={() => addToCart(product, 1)}
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
-                              aria-label="Increase Quantity"
-                            >
-                              <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            </button>
-                          </div>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => addToCart(product, 1)}
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+                            aria-label="Increase Quantity"
+                          >
+                            <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Item Total Column (Hidden on small mobile to give maximum width to Product Name) */}

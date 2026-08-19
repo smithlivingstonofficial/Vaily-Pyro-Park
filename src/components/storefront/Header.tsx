@@ -16,8 +16,8 @@ import {
   Package,
   ChevronRight,
   Phone,
-  MessageSquare,
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { useCart } from '@/context/CartContext';
 import { Category, DeliveryZone } from '@/types';
 
@@ -349,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className="flex items-center gap-2.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
                   >
                     <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                      <MessageSquare className="w-3.5 h-3.5" />
+                      <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
                     </div>
                     <div>
                       <span className="text-[10px] text-emerald-700 block font-normal">WhatsApp Enquiry</span>

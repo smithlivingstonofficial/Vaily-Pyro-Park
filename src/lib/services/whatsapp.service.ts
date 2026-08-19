@@ -4,7 +4,6 @@ export type WhatsAppTemplateType =
   | 'ORDER_RECEIPT'
   | 'STATUS_UPDATE'
   | 'DISPATCH_TRACKING'
-  | 'PAYMENT_REMINDER'
   | 'CUSTOM';
 
 export interface WhatsAppMessageOptions {
@@ -68,7 +67,6 @@ Thank you for your order! Here are your order details:
 📦 *Order Number:* ${order.order_number}
 📅 *Date:* ${new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
 📌 *Status:* ${order.status}
-💳 *Payment Mode:* ${order.payment_method || 'COD'} (${order.is_paid ? 'PAID ✓' : 'Pay on Delivery'})
 
 *Ordered Items:*
 ${itemsList}
@@ -124,22 +122,7 @@ Great news! Your Sivakasi crackers order has been dispatched!
 Track live status:
 ${trackingUrl}
 
-Please keep exact cash (₹${order.grand_total.toLocaleString('en-IN')}) ready if paying COD upon delivery.
 Happy & Safe Celebrations with Vaily Pyro Park! 🎆`;
-      }
-
-      case 'PAYMENT_REMINDER': {
-        return `💰 *PAYMENT & ORDER SUMMARY: ${order.order_number}* 💰
-
-Dear ${order.customer_name},
-This is a quick summary for your order #${order.order_number}.
-
-• Amount Payable: *₹${order.grand_total.toLocaleString('en-IN')}*
-• Payment Status: *${order.is_paid ? 'PAID ✓' : 'UNPAID / COD'}*
-• Delivery Address: ${order.city}, ${order.state} - ${order.pincode}
-
-If you have completed payment or have any queries, please let us know.
-Vaily Pyro Park - Sivakasi Direct Factory`;
       }
 
       case 'CUSTOM': {
