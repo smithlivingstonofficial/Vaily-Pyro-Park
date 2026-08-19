@@ -56,7 +56,7 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'items' | 'customer' | 'logistics' | 'audit'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'timeline' | 'customer' | 'logistics' | 'audit'>('items');
 
   // Logistics form state
   const [courierPartner, setCourierPartner] = useState<string>('ST Courier');
@@ -380,20 +380,11 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Real-time Order Timeline Tracker */}
-      <OrderTimeline
-        status={order.status}
-        createdAt={order.created_at}
-        courierPartner={order.courier_partner}
-        trackingNumber={order.tracking_number}
-        adminNotes={order.admin_notes}
-      />
-
       {/* Ergonomic Mobile & Desktop Navigation Tabs */}
       <div className="bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center gap-1 text-xs overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('items')}
-          className={`flex-1 min-w-[90px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[85px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'items'
               ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
               : 'text-slate-600 hover:bg-slate-100'
@@ -404,8 +395,20 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
         </button>
 
         <button
-          onClick={() => setActiveTab('customer')}
+          onClick={() => setActiveTab('timeline')}
           className={`flex-1 min-w-[110px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeTab === 'timeline'
+              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Live Timeline</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('customer')}
+          className={`flex-1 min-w-[95px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'customer'
               ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
               : 'text-slate-600 hover:bg-slate-100'
@@ -417,7 +420,7 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
 
         <button
           onClick={() => setActiveTab('logistics')}
-          className={`flex-1 min-w-[100px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[95px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'logistics'
               ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
               : 'text-slate-600 hover:bg-slate-100'
@@ -429,7 +432,7 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
 
         <button
           onClick={() => setActiveTab('audit')}
-          className={`flex-1 min-w-[80px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[85px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'audit'
               ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
               : 'text-slate-600 hover:bg-slate-100'
@@ -518,7 +521,18 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* TAB 2: CUSTOMER & DELIVERY */}
+      {/* TAB 2: LIVE ORDER TIMELINE */}
+      {activeTab === 'timeline' && (
+        <OrderTimeline
+          status={order.status}
+          createdAt={order.created_at}
+          courierPartner={order.courier_partner}
+          trackingNumber={order.tracking_number}
+          adminNotes={order.admin_notes}
+        />
+      )}
+
+      {/* TAB 3: CUSTOMER & DELIVERY */}
       {activeTab === 'customer' && (
         <div className="space-y-4">
           <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4 text-xs">
