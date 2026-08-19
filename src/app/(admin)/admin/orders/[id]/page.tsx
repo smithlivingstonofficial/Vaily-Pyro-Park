@@ -27,13 +27,15 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { OrderService } from '@/lib/services/order.service';
-import { Order, OrderStatus } from '@/types';
+import { ProductService } from '@/lib/services/product.service';
+import { Order, OrderStatus, OrderItem, Product } from '@/types';
 import { WhatsAppModal } from '@/components/admin/orders/WhatsAppModal';
 import { PackingSlipModal } from '@/components/admin/orders/PackingSlipModal';
 import { StatusConfirmationModal, PendingStatusChange } from '@/components/admin/orders/StatusConfirmationModal';
 import { ToastNotification, ToastMessage } from '@/components/admin/orders/ToastNotification';
 import { WhatsAppTemplateType, WhatsAppService } from '@/lib/services/whatsapp.service';
 import { OrderTimeline } from '@/components/common/OrderTimeline';
+import { AdminProductModal } from '@/components/admin/orders/AdminProductModal';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -69,6 +71,8 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
   const [whatsAppTemplate, setWhatsAppTemplate] = useState<WhatsAppTemplateType>('ORDER_RECEIPT');
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
+  const [selectedProductItem, setSelectedProductItem] = useState<OrderItem | null>(null);
+  const [selectedProductMetadata, setSelectedProductMetadata] = useState<Product | null>(null);
 
   // Toast notifications
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -207,6 +211,19 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
     addToast(`Copied ${label} to clipboard!`, 'success');
   };
 
+  const handleItemClick = async (item: OrderItem) => {
+    setSelectedProductItem(item);
+    try {
+      const products = await ProductService.getAllProducts();
+      const match = products.find(
+        (p) => p.id === item.product_id || p.name.toLowerCase() === item.product_name.toLowerCase()
+      );
+      setSelectedProductMetadata(match || null);
+    } catch {
+      setSelectedProductMetadata(null);
+    }
+  };
+
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case 'PENDING':
@@ -311,37 +328,39 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
       <ToastNotification toasts={toasts} onDismiss={(id) => setToasts((t) => t.filter((x) => x.id !== id))} />
 
       {/* Navigation Top Header Bar */}
-      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="bg-white p-3.5 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3">
+        {/* Top Action Row */}
+        <div className="flex items-center justify-between gap-2">
           <Link
             href="/admin/orders"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-4 h-4 text-slate-600" />
-            <span>Back to Orders</span>
+            <span className="hidden sm:inline">Back to Orders</span>
+            <span className="sm:hidden">Back</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleTogglePaymentSettlement}
-              className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5 border ${
+              className={`px-2.5 py-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1 border ${
                 order.is_paid
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
+                  : 'bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100'
               }`}
               title="Click to toggle payment settlement state"
             >
               <CreditCard className="w-3.5 h-3.5" />
-              <span>{order.is_paid ? 'PAID ✓' : 'UNPAID (COD)'}</span>
+              <span>{order.is_paid ? 'PAID ✓' : 'UNPAID COD'}</span>
             </button>
 
             <button
               onClick={() => setIsPackingSlipOpen(true)}
-              className="p-2 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5 border border-slate-200"
+              className="p-1.5 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1 border border-slate-200"
               title="Print Packing Slip / Tax Invoice"
             >
               <Printer className="w-4 h-4 text-slate-700" />
-              <span className="hidden sm:inline">Print Slip</span>
+              <span className="hidden sm:inline">Print</span>
             </button>
 
             <button
@@ -349,7 +368,7 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
                 setWhatsAppTemplate('ORDER_RECEIPT');
                 setIsWhatsAppOpen(true);
               }}
-              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+              className="p-1.5 sm:px-3 sm:py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1"
               title="Compose WhatsApp Message"
             >
               <MessageSquare className="w-4 h-4 fill-slate-950" />
@@ -358,22 +377,23 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-100 pt-3">
-          <div className="space-y-0.5">
+        {/* Order Details & Grand Total Row */}
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <div className="space-y-0.5 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight font-mono">
+              <h1 className="text-lg sm:text-2xl font-black text-slate-950 tracking-tight font-mono truncate">
                 {order.order_number}
               </h1>
               {getStatusBadge(order.status)}
             </div>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
               Placed on {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
             </p>
           </div>
 
-          <div className="text-left sm:text-right">
-            <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">Grand Total</span>
-            <span className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
+          <div className="text-right shrink-0 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/30">
+            <span className="text-[9px] text-amber-900 uppercase font-black tracking-wider block">Grand Total</span>
+            <span className="text-base sm:text-xl font-black text-slate-950 font-mono">
               ₹{order.grand_total.toLocaleString('en-IN')}
             </span>
           </div>
@@ -381,66 +401,35 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
       </div>
 
       {/* Ergonomic Mobile & Desktop Navigation Tabs */}
-      <div className="bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center gap-1 text-xs overflow-x-auto scrollbar-none">
-        <button
-          onClick={() => setActiveTab('items')}
-          className={`flex-1 min-w-[85px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'items'
-              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Package className="w-3.5 h-3.5" />
-          <span>Items ({order.items?.length || 0})</span>
-        </button>
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-1 text-xs">
+        {[
+          { id: 'items', label: `Items (${order.items?.length || 0})`, icon: Package },
+          { id: 'customer', label: 'Customer', icon: User },
+          { id: 'timeline', label: 'Timeline', icon: Clock },
+          { id: 'logistics', label: 'Logistics', icon: Truck },
+          { id: 'audit', label: 'Audit', icon: FileText },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
 
-        <button
-          onClick={() => setActiveTab('timeline')}
-          className={`flex-1 min-w-[110px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'timeline'
-              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Live Timeline</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('customer')}
-          className={`flex-1 min-w-[95px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'customer'
-              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <User className="w-3.5 h-3.5" />
-          <span>Customer</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('logistics')}
-          className={`flex-1 min-w-[95px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'logistics'
-              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Truck className="w-3.5 h-3.5" />
-          <span>Logistics</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('audit')}
-          className={`flex-1 min-w-[85px] py-2 px-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'audit'
-              ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Audit Notes</span>
-        </button>
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`py-2 rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                isActive
+                  ? 'bg-amber-500 text-slate-950 shadow-2xs font-black px-3 flex-1 sm:flex-none'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 px-2.5 sm:px-3'
+              }`}
+              title={tab.label}
+            >
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950' : 'text-slate-600'}`} />
+              <span className={isActive ? 'inline-block animate-in fade-in zoom-in-95 duration-150' : 'hidden sm:inline-block'}>
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TAB 1: ITEMS & FINANCIAL BREAKDOWN */}
@@ -450,34 +439,52 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-black text-sm text-slate-950 flex items-center gap-2">
                 <Package className="w-4 h-4 text-amber-600" />
-                <span>Ordered Fireworks Items ({order.items?.length || 0})</span>
+                <span>Order Items ({order.items?.length || 0})</span>
               </h3>
-              <span className="text-[10px] font-black text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                Sivakasi Pack
+              <span className="text-[10px] font-black text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/90">
+                Direct Depot
               </span>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="space-y-2 pt-1">
               {order.items?.map((item, idx) => (
-                <div key={idx} className="py-3 flex items-center justify-between gap-3 text-xs">
+                <div
+                  key={idx}
+                  onClick={() => handleItemClick(item)}
+                  className="p-3 bg-slate-50/90 hover:bg-amber-50/90 rounded-2xl border border-slate-200/80 hover:border-amber-300 flex items-center justify-between gap-3 text-xs cursor-pointer transition-all group shadow-2xs"
+                  title="Click to view full product specifications"
+                >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base shrink-0 overflow-hidden">
+                    <div className="w-11 h-11 rounded-xl bg-white text-amber-700 border border-slate-200 flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden group-hover:border-amber-400 group-hover:scale-105 transition-all shadow-2xs">
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" />
                       ) : (
                         '🎆'
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-black text-slate-950 truncate text-xs">{item.product_name}</p>
-                      <p className="text-slate-500 font-medium text-[11px]">
-                        {item.quantity} units × ₹{item.unit_price.toLocaleString('en-IN')}
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="font-black text-slate-950 truncate text-xs sm:text-sm group-hover:text-amber-700 transition-colors">
+                        {item.product_name}
                       </p>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-amber-500 text-slate-950 font-black text-[11px] px-2.5 py-0.5 rounded-md shadow-2xs shrink-0">
+                          {item.quantity}x
+                        </span>
+                        <span className="text-slate-500 font-bold text-[11px] font-mono">
+                          × ₹{item.unit_price.toLocaleString('en-IN')}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-right font-mono font-black text-slate-950 text-sm shrink-0">
-                    ₹{(item.total_price || item.quantity * item.unit_price).toLocaleString('en-IN')}
+                  <div className="text-right shrink-0">
+                    <span className="font-mono font-black text-slate-950 text-sm sm:text-base block">
+                      ₹{(item.total_price || item.quantity * item.unit_price).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] text-amber-700 font-extrabold flex items-center justify-end gap-0.5 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span>Details</span>
+                      <span>→</span>
+                    </span>
                   </div>
                 </div>
               ))}
@@ -810,6 +817,18 @@ export default function SingleOrderDetailsPage({ params }: PageProps) {
         <PackingSlipModal
           order={order}
           onClose={() => setIsPackingSlipOpen(false)}
+        />
+      )}
+
+      {/* Product Details Quick View Modal */}
+      {selectedProductItem && (
+        <AdminProductModal
+          item={selectedProductItem}
+          product={selectedProductMetadata}
+          onClose={() => {
+            setSelectedProductItem(null);
+            setSelectedProductMetadata(null);
+          }}
         />
       )}
     </div>
