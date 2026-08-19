@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${poppins.variable}`}>
-      <body className="font-sans antialiased text-slate-900 bg-slate-50 min-h-screen">
+    <html lang="en" className={`${plusJakarta.variable} ${poppins.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased text-slate-900 bg-slate-50 min-h-screen" suppressHydrationWarning>
         <CartProvider>{children}</CartProvider>
       </body>
     </html>
