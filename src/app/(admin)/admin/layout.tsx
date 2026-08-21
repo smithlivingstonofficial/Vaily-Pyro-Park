@@ -59,10 +59,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-        <div className="flex items-center gap-3 bg-white p-5 rounded-3xl border border-slate-200 shadow-md text-xs font-black text-slate-800">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800">
+        <div className="flex items-center gap-3 bg-white p-5 rounded-3xl border border-slate-200 shadow-md text-xs font-semibold text-slate-800">
           <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <span>Verifying Supabase Admin Session...</span>
+          <span>Loading...</span>
         </div>
       </div>
     );
