@@ -306,20 +306,28 @@ export function OrderDetailsDrawer({
                 </h3>
 
                 <div className="space-y-2 text-xs text-slate-600 font-medium">
-                  <div className="flex justify-between">
-                    <span>Items Subtotal:</span>
-                    <span className="font-bold text-slate-900 font-mono">₹{order.subtotal.toLocaleString()}</span>
-                  </div>
+                  {order.discount_amount > 0 && (
+                    <div className="flex justify-between">
+                      <span>Total Real MRP:</span>
+                      <span className="font-bold text-slate-900 font-mono">
+                        ₹{(order.subtotal + order.discount_amount).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   {order.discount_amount > 0 && (
                     <div className="flex justify-between text-emerald-600 font-bold">
                       <span>Festival Discount:</span>
                       <span className="font-mono">-₹{order.discount_amount.toLocaleString()}</span>
                     </div>
                   )}
+                  <div className="flex justify-between pt-0.5 border-t border-slate-100">
+                    <span>Final Price (Subtotal):</span>
+                    <span className="font-bold text-slate-900 font-mono">₹{order.subtotal.toLocaleString()}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Delivery Fee ({order.state}):</span>
                     <span className="font-bold text-slate-900 font-mono">
-                      ₹{(order.delivery_fee ?? 0).toLocaleString()}
+                      {(order.delivery_fee ?? 0) > 0 ? `₹${order.delivery_fee.toLocaleString()}` : '₹0 (Direct / Free)'}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm font-black text-slate-950 pt-3 border-t border-slate-200">

@@ -126,6 +126,7 @@ export class PricingService {
         quantity: qty,
         total_price: lineSelling,
         image_url: dbProduct?.image_url,
+        mrp: mrpPrice,
       });
     }
 

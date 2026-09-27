@@ -9,6 +9,7 @@ export interface BillingItem {
   total_price: number;
   image_url?: string;
   pack_size?: string;
+  mrp?: number;
 }
 
 export interface DraftBill {
@@ -169,13 +170,23 @@ export class BillingService {
           admin_notes: billData.admin_notes,
           created_at: billData.created_at,
           updated_at: billData.updated_at,
-          items: (itemsData as any[]) || dto.items.map((i, idx) => ({
+          items: (itemsData as any[])?.map((dbItem) => {
+            const match = dto.items.find((i) => i.product_id === dbItem.product_id);
+            return {
+              ...dbItem,
+              unit_price: Number(dbItem.unit_price),
+              quantity: Number(dbItem.quantity),
+              total_price: Number(dbItem.total_price),
+              mrp: match?.mrp || (dbItem.mrp ? Number(dbItem.mrp) : undefined),
+            };
+          }) || dto.items.map((i, idx) => ({
             id: `item-${idx}`,
             product_id: i.product_id,
             product_name: i.product_name,
             unit_price: i.unit_price,
             quantity: i.quantity,
             total_price: i.total_price,
+            mrp: i.mrp,
           })),
         };
       }
@@ -235,13 +246,23 @@ export class BillingService {
             subtotal: Number(orderData.subtotal),
             delivery_fee: Number(orderData.delivery_fee || 0),
             discount_amount: Number(orderData.discount_amount || 0),
-            items: (itemsData as OrderItem[]) || dto.items.map((i, idx) => ({
+            items: (itemsData as OrderItem[])?.map((dbItem) => {
+              const match = dto.items.find((i) => i.product_id === dbItem.product_id);
+              return {
+                ...dbItem,
+                unit_price: Number(dbItem.unit_price),
+                quantity: Number(dbItem.quantity),
+                total_price: Number(dbItem.total_price),
+                mrp: match?.mrp || (dbItem.mrp ? Number(dbItem.mrp) : undefined),
+              };
+            }) || dto.items.map((i, idx) => ({
               id: `item-${idx}`,
               product_id: i.product_id,
               product_name: i.product_name,
               unit_price: i.unit_price,
               quantity: i.quantity,
               total_price: i.total_price,
+              mrp: i.mrp,
             })),
           };
         }
@@ -357,6 +378,7 @@ export class BillingService {
                   unit_price: Number(i.unit_price),
                   quantity: i.quantity,
                   total_price: Number(i.total_price),
+                  mrp: i.mrp ? Number(i.mrp) : undefined,
                 }))
               : [],
           };

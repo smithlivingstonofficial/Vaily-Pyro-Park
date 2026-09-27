@@ -253,25 +253,36 @@ export default function OrderConfirmationPage() {
 
           {/* Financial Breakdown */}
           <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span className="font-bold text-slate-900">₹{order.subtotal.toLocaleString('en-IN')}</span>
-            </div>
             {order.discount_amount > 0 && (
-              <div className="flex justify-between text-emerald-600 font-bold">
-                <span>Discounts Applied:</span>
-                <span>- ₹{order.discount_amount.toLocaleString('en-IN')}</span>
+              <div className="flex justify-between">
+                <span>Total Real MRP:</span>
+                <span className="font-bold text-slate-900 font-mono">
+                  ₹{(order.subtotal + order.discount_amount).toLocaleString('en-IN')}
+                </span>
               </div>
             )}
+            {order.discount_amount > 0 && (
+              <div className="flex justify-between text-emerald-600 font-bold">
+                <span>
+                  Festival Discount (
+                  {Math.round((order.discount_amount / (order.subtotal + order.discount_amount)) * 100)}% Off):
+                </span>
+                <span className="font-mono">- ₹{order.discount_amount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+            <div className="flex justify-between pt-0.5 border-t border-slate-100">
+              <span>Final Price (Subtotal):</span>
+              <span className="font-bold text-slate-900 font-mono">₹{order.subtotal.toLocaleString('en-IN')}</span>
+            </div>
             <div className="flex justify-between">
               <span>Delivery Fee:</span>
               <span className="font-bold text-slate-900 font-mono">
-                ₹{(order.delivery_fee ?? 0).toLocaleString('en-IN')}
+                {(order.delivery_fee ?? 0) > 0 ? `₹${order.delivery_fee.toLocaleString('en-IN')}` : '₹0 (Free / Direct)'}
               </span>
             </div>
             <div className="flex justify-between text-base font-black text-slate-950 pt-2 border-t border-slate-200">
-              <span>Grand Total:</span>
-              <span className="text-amber-600">₹{order.grand_total.toLocaleString('en-IN')}</span>
+              <span>Grand Total Payable:</span>
+              <span className="text-amber-600 font-mono">₹{order.grand_total.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>

@@ -134,7 +134,13 @@ export class OrderService {
       subtotal: Number(orderData.subtotal),
       delivery_fee: Number(orderData.delivery_fee),
       discount_amount: Number(orderData.discount_amount),
-      items: itemsData || pricing.items,
+      items: (itemsData as any[])?.map((item) => {
+        const matched = pricing.items.find((p) => p.product_id === item.product_id);
+        return {
+          ...item,
+          mrp: matched?.mrp || item.mrp,
+        };
+      }) || pricing.items,
     };
 
     if (typeof window !== 'undefined') {

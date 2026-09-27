@@ -82,6 +82,7 @@ export interface OrderItem {
   quantity: number;
   total_price: number;
   image_url?: string;
+  mrp?: number;
 }
 
 export interface OrderStatusHistory {

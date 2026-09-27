@@ -121,6 +121,7 @@ export default function AdminBillingPage() {
             total_price: prod.selling_price * qty,
             image_url: prod.image_url,
             pack_size: prod.pack_size,
+            mrp: prod.mrp,
           });
         }
       }
@@ -135,6 +136,10 @@ export default function AdminBillingPage() {
 
   const selectedSubtotal = useMemo(() => {
     return selectedItems.reduce((sum, item) => sum + item.total_price, 0);
+  }, [selectedItems]);
+
+  const selectedTotalMrp = useMemo(() => {
+    return selectedItems.reduce((sum, item) => sum + ((item.mrp || item.unit_price) * item.quantity), 0);
   }, [selectedItems]);
 
   // Save as Draft directly from bottom bar
@@ -642,11 +647,18 @@ export default function AdminBillingPage() {
                   </span>
                 </div>
 
-                <div className="flex items-baseline gap-1 mt-0.5">
-                  <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Subtotal:</span>
-                  <span className="font-mono text-base sm:text-xl font-black text-amber-400 tracking-tight">
-                    ₹{selectedSubtotal.toLocaleString('en-IN')}
-                  </span>
+                <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Final:</span>
+                    <span className="font-mono text-base sm:text-xl font-black text-amber-400 tracking-tight">
+                      ₹{selectedSubtotal.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  {selectedTotalMrp > selectedSubtotal && (
+                    <span className="text-[10px] sm:text-xs font-mono text-emerald-400 font-bold">
+                      (MRP: ₹{selectedTotalMrp.toLocaleString('en-IN')})
+                    </span>
+                  )}
                 </div>
               </div>
 

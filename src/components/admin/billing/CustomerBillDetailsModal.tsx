@@ -87,6 +87,8 @@ export function CustomerBillDetailsModal({
   if (!isOpen) return null;
 
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalMrp = items.reduce((sum, item) => sum + ((item.mrp || item.unit_price) * item.quantity), 0);
+  const totalDiscount = Math.max(0, totalMrp - subtotal + (Number(discountAmount) || 0));
   const grandTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
 
   const handleAutofillCounter = () => {
@@ -389,13 +391,18 @@ export function CustomerBillDetailsModal({
           <div className="p-3 sm:px-5 sm:py-3.5 bg-slate-950 text-white border-t border-slate-800 shrink-0 space-y-2.5">
             {/* Total Payable Summary Strip */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">
-                  Total Payable:
+                  Final Price:
                 </span>
                 <span className="text-[10px] sm:text-xs font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">
                   {items.length} Items ({totalQuantity} Pcs)
                 </span>
+                {totalMrp > subtotal && (
+                  <span className="text-[10px] sm:text-xs text-emerald-400 font-mono font-bold">
+                    Saved ₹{totalDiscount.toLocaleString('en-IN')} (MRP: ₹{totalMrp.toLocaleString('en-IN')})
+                  </span>
+                )}
               </div>
 
               <span className="font-mono text-xl sm:text-2xl font-black text-amber-400">
